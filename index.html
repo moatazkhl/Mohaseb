@@ -1,0 +1,3313 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نظام المحاسبة المتكامل</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:system-ui; }
+        body { background:#f1f5f9; display:flex; flex-direction:column; height:100vh; }
+        .top-nav { background:#0f172a; color:#fff; padding:10px 20px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+        .top-nav .brand { font-size:24px; font-weight:300; margin-left:20px; }
+        .top-nav .brand span { color:#3b82f6; font-weight:700; }
+        .top-nav .nav-btn { background:transparent; border:none; color:#94a3b8; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:15px; }
+        .top-nav .nav-btn:hover { background:#1e293b; color:#fff; }
+        .top-nav .nav-btn.active { background:#1e293b; color:#fff; }
+        .sub-nav { background:#f8fafc; padding:8px 20px; display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid #e2e8f0; min-height:40px; }
+        .sub-nav .sub-btn { background:transparent; border:1px solid transparent; padding:5px 14px; border-radius:20px; cursor:pointer; font-size:14px; }
+        .sub-nav .sub-btn.active { background:#3b82f6; color:#fff; border-color:#3b82f6; }
+        .main { flex:1; padding:25px 30px; overflow-y:auto; }
+        .page { display:none; }
+        .page.active { display:block; }
+        .card { background:#fff; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
+        .card-title { font-size:20px; font-weight:600; margin-bottom:15px; }
+        .flex-row { display:flex; flex-wrap:wrap; gap:15px; align-items:end; }
+        .field { flex:1; min-width:150px; }
+        .field label { display:block; font-size:14px; font-weight:600; color:#64748b; margin-bottom:4px; }
+        .field input, .field select, .field textarea { width:100%; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:16px; }
+        .field input:focus, .field select:focus { outline:none; border-color:#3b82f6; }
+        .field input[type="date"] { cursor:pointer; }
+        .btn { padding:10px 24px; border:none; border-radius:8px; font-weight:600; cursor:pointer; color:#fff; display:inline-flex; align-items:center; gap:6px; }
+        .btn-primary { background:#3b82f6; }
+        .btn-primary:hover { background:#2563eb; }
+        .btn-success { background:#22c55e; }
+        .btn-success:hover { background:#16a34a; }
+        .btn-danger { background:#ef4444; }
+        .btn-danger:hover { background:#dc2626; }
+        .btn-warning { background:#f59e0b; }
+        .btn-warning:hover { background:#d97706; }
+        .btn-outline { background:transparent; border:2px solid #e2e8f0; color:#0f172a; }
+        .btn-outline:hover { background:#f8fafc; }
+        .btn-sm { padding:6px 14px; font-size:14px; }
+        .btn-print { background:#8b5cf6; }
+        .btn-print:hover { background:#7c3aed; }
+        .btn-share { background:#06b6d4; }
+        .btn-share:hover { background:#0891b2; }
+        .table-wrap { overflow-x:auto; margin-top:10px; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { padding:12px; text-align:right; border-bottom:1px solid #e2e8f0; }
+        th { background:#f8fafc; font-weight:700; }
+        .badge { padding:2px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
+        .badge.green { background:#dcfce7; color:#15803d; }
+        .badge.red { background:#fee2e2; color:#b91c1c; }
+        .badge.blue { background:#dbeafe; color:#1d4ed8; }
+        .badge.orange { background:#fef3c7; color:#b45309; }
+        .badge.purple { background:#e0e7ff; color:#4338ca; }
+        .badge.yellow { background:#fef9c3; color:#854d0e; }
+        .tab-group { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px; border-bottom:2px solid #e2e8f0; padding-bottom:10px; }
+        .tab-group .tab-btn { background:transparent; border:none; padding:8px 18px; border-radius:30px; font-weight:600; cursor:pointer; color:#64748b; }
+        .tab-group .tab-btn.active { background:#3b82f6; color:#fff; }
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
+        .search-box { width:100%; max-width:300px; padding:8px 12px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:16px; }
+        .search-box:focus { outline:none; border-color:#3b82f6; }
+        .barcode-preview { display:flex; flex-wrap:wrap; gap:20px; justify-content:center; padding:20px; background:#f8fafc; border-radius:12px; border:1px dashed #e2e8f0; }
+        .barcode-item { border:1px solid #e2e8f0; padding:20px; border-radius:8px; text-align:center; background:#fff; }
+        .barcode-item svg { max-width:200px; }
+        .dash-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px; margin-bottom:20px; }
+        .stat-card { background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05); border-right:4px solid #3b82f6; }
+        .stat-card h4 { color:#64748b; font-size:14px; }
+        .stat-card .value { font-size:28px; font-weight:700; }
+        .adj-item { display:flex; flex-wrap:wrap; gap:15px 25px; align-items:center; padding:12px 0; border-bottom:1px solid #e2e8f0; }
+        .adj-item .name { min-width:150px; font-weight:600; }
+        .adj-item input[type="number"] { width:130px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:16px; }
+        .invoice-item { border-bottom:1px solid #e2e8f0; padding:8px 0; display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; }
+        .invoice-item .actions { display:flex; gap:6px; }
+        .logo-preview { max-width:200px; max-height:100px; border:1px dashed #e2e8f0; padding:10px; border-radius:8px; background:#fff; }
+        .logo-preview img { max-width:100%; max-height:80px; }
+        .entry-item { border-bottom:1px solid #e2e8f0; padding:10px 0; display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; }
+        .entry-item .actions { display:flex; gap:6px; }
+        .report-section { background:#f8fafc; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #e2e8f0; }
+        .report-section h4 { color:#0f172a; margin-bottom:10px; }
+        .report-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:15px; margin-bottom:15px; }
+        .report-summary .item { background:#fff; padding:15px; border-radius:8px; border:1px solid #e2e8f0; text-align:center; }
+        .report-summary .item .label { color:#64748b; font-size:13px; }
+        .report-summary .item .value { font-size:22px; font-weight:700; color:#0f172a; }
+        .print-area { padding:20px; background:#fff; border-radius:8px; }
+        .print-area .header { text-align:center; border-bottom:2px solid #0f172a; padding-bottom:10px; margin-bottom:15px; }
+        .print-area .header h2 { font-size:24px; }
+        .print-area .header .logo { max-height:80px; }
+        .print-area .footer { text-align:center; border-top:1px solid #e2e8f0; padding-top:10px; margin-top:15px; font-size:12px; color:#64748b; }
+        @media (max-width:768px) { .main { padding:12px; } .flex-row .field { min-width:100%; } }
+        @media print {
+            .top-nav, .sub-nav, .no-print { display:none !important; }
+            .main { padding:10px; height:auto; overflow:visible; }
+            .page { display:block !important; }
+            .card { box-shadow:none; border:1px solid #ccc; break-inside:avoid; }
+            .print-area { border:none; padding:0; }
+            .btn { display:none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== الشريط العلوي ===== -->
+<div class="top-nav">
+    <div class="brand">📊 <span>محاسبي</span></div>
+    <button class="nav-btn active" onclick="showPage('dashboard')">الرئيسية</button>
+    <button class="nav-btn" onclick="showPage('invoices')">الفواتير</button>
+    <button class="nav-btn" onclick="showPage('inventory')">المخزون</button>
+    <button class="nav-btn" onclick="showPage('accounts')">الحسابات</button>
+    <button class="nav-btn" onclick="showPage('settings')">الإعدادات</button>
+    <button class="nav-btn" onclick="showPage('reports')">التقارير</button>
+    <button class="nav-btn" onclick="showPage('sync')">نسخ احتياطي</button>
+</div>
+<div class="sub-nav" id="subNav"></div>
+
+<!-- ===== المحتوى الرئيسي ===== -->
+<div class="main" id="app">
+
+    <!-- ========================================================= -->
+    <!-- صفحة الرئيسية -->
+    <!-- ========================================================= -->
+    <div id="page-dashboard" class="page active">
+        <h2>📈 لوحة التحكم</h2>
+        <div class="dash-grid">
+            <div class="stat-card"><h4>📦 إجمالي المواد</h4><div class="value" id="dash-materials">0</div></div>
+            <div class="stat-card"><h4>💰 قيمة المخزون</h4><div class="value" id="dash-stock-value">0</div></div>
+            <div class="stat-card"><h4>🏦 عدد الحسابات</h4><div class="value" id="dash-accounts">0</div></div>
+            <div class="stat-card"><h4>📈 صافي الربح</h4><div class="value" id="dash-profit">0</div></div>
+        </div>
+        <div class="card"><h4 class="card-title">📌 آخر الفواتير</h4><div id="dash-recent"></div></div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- صفحة الفواتير -->
+    <!-- ========================================================= -->
+    <div id="page-invoices" class="page">
+        <h2>🧾 إدارة الفواتير</h2>
+        <div class="tab-group" id="invoicesTabs">
+            <button class="tab-btn active" onclick="switchInvoiceTab('create-invoice')">➕ إنشاء فاتورة</button>
+            <button class="tab-btn" onclick="switchInvoiceTab('invoices-list')">📋 قائمة الفواتير</button>
+            <button class="tab-btn" onclick="switchInvoiceTab('edit-invoice')">✏️ تعديل فاتورة</button>
+        </div>
+
+        <!-- إنشاء فاتورة -->
+        <div class="tab-panel active" id="panel-create-invoice">
+            <div class="card">
+                <h4 class="card-title">🧾 إنشاء فاتورة جديدة</h4>
+                <div class="flex-row">
+                    <div class="field"><label>نوع الفاتورة *</label>
+                        <select id="inv-type" onchange="updateInvoiceFields()">
+                            <option value="sale">مبيع</option>
+                            <option value="purchase">شراء</option>
+                            <option value="sale_return">مردود مبيع</option>
+                            <option value="purchase_return">مردود شراء</option>
+                            <option value="damage">تلف</option>
+                        </select>
+                    </div>
+                    <div class="field"><label>الحساب *</label><select id="inv-account"></select></div>
+                    <div class="field"><label>العملة *</label><select id="inv-currency"></select></div>
+                    <div class="field"><label>التاريخ</label><input id="inv-date" type="date"></div>
+                </div>
+                <div class="flex-row">
+                    <div class="field"><label>طريقة الدفع</label>
+                        <select id="inv-payment">
+                            <option value="cash">نقدي</option>
+                            <option value="credit">آجل</option>
+                        </select>
+                    </div>
+                    <div class="field" id="due-date-field" style="display:none;"><label>تاريخ الاستحقاق</label><input id="inv-due-date" type="date"></div>
+                </div>
+                <div class="field"><label>ملاحظات</label><input id="inv-note" placeholder="ملاحظات على الفاتورة"></div>
+                <hr style="margin:15px 0;">
+                <h4 class="card-title">📦 إضافة أصناف</h4>
+                <div class="flex-row">
+                    <div class="field"><label>المادة</label><select id="inv-material"></select></div>
+                    <div class="field"><label>الكمية</label><input id="inv-qty" type="number" value="1" min="0.01" step="0.01"></div>
+                    <div class="field"><label>سعر الوحدة</label><input id="inv-price" type="number" step="0.01" placeholder="0.00"></div>
+                    <div class="field" style="flex:0 0 auto;"><button class="btn btn-primary" onclick="addInvoiceItem()">➕ إضافة صنف</button></div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>#</th><th>المادة</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th><th>الإجراء</th></tr></thead>
+                        <tbody id="invoice-items-body"></tbody>
+                        <tfoot><tr class="total-row"><td colspan="4" style="text-align:left;">الإجمالي الكلي</td><td id="invoice-total-display">0.00</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+                <button class="btn btn-success" onclick="saveInvoice()" style="margin-top:15px;">💾 حفظ الفاتورة</button>
+                <button class="btn btn-outline" onclick="clearInvoice()" style="margin-top:15px;margin-right:10px;">🗑️ تفريغ</button>
+            </div>
+        </div>
+
+        <!-- قائمة الفواتير -->
+        <div class="tab-panel" id="panel-invoices-list">
+            <div class="card">
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:15px;">
+                    <input type="text" id="search-invoice" class="search-box" placeholder="🔍 بحث ذكي (رقم، نوع، حساب، ملاحظة)" oninput="loadInvoices()">
+                    <select id="filter-invoice-type" onchange="loadInvoices()" style="padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:16px;">
+                        <option value="all">جميع الأنواع</option>
+                        <option value="sale">مبيع</option>
+                        <option value="purchase">شراء</option>
+                        <option value="sale_return">مردود مبيع</option>
+                        <option value="purchase_return">مردود شراء</option>
+                        <option value="damage">تلف</option>
+                    </select>
+                    <select id="filter-payment" onchange="loadInvoices()" style="padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:16px;">
+                        <option value="all">جميع الدفعات</option>
+                        <option value="cash">نقدي</option>
+                        <option value="credit">آجل</option>
+                    </select>
+                    <button class="btn btn-primary btn-sm" onclick="switchInvoiceTab('create-invoice')">➕ فاتورة جديدة</button>
+                </div>
+                <div id="invoices-list-container"><p style="color:#94a3b8;">لا توجد فواتير.</p></div>
+            </div>
+        </div>
+
+        <!-- تعديل فاتورة -->
+        <div class="tab-panel" id="panel-edit-invoice">
+            <div class="card">
+                <h4 class="card-title">✏️ تعديل الفاتورة</h4>
+                <input type="hidden" id="edit-inv-id">
+                <div class="flex-row">
+                    <div class="field"><label>نوع الفاتورة</label><select id="edit-inv-type"><option value="sale">مبيع</option><option value="purchase">شراء</option><option value="sale_return">مردود مبيع</option><option value="purchase_return">مردود شراء</option><option value="damage">تلف</option></select></div>
+                    <div class="field"><label>الحساب</label><select id="edit-inv-account"></select></div>
+                    <div class="field"><label>العملة</label><select id="edit-inv-currency"></select></div>
+                    <div class="field"><label>التاريخ</label><input id="edit-inv-date" type="date"></div>
+                </div>
+                <div class="flex-row">
+                    <div class="field"><label>طريقة الدفع</label>
+                        <select id="edit-inv-payment">
+                            <option value="cash">نقدي</option>
+                            <option value="credit">آجل</option>
+                        </select>
+                    </div>
+                    <div class="field" id="edit-due-date-field" style="display:none;"><label>تاريخ الاستحقاق</label><input id="edit-inv-due-date" type="date"></div>
+                </div>
+                <div class="field"><label>ملاحظات</label><input id="edit-inv-note" placeholder="ملاحظات على الفاتورة"></div>
+                <div class="table-wrap" style="margin-top:15px;">
+                    <table>
+                        <thead><tr><th>#</th><th>المادة</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th><th>الإجراء</th></tr></thead>
+                        <tbody id="edit-invoice-items-body"></tbody>
+                        <tfoot><tr class="total-row"><td colspan="4" style="text-align:left;">الإجمالي الكلي</td><td id="edit-invoice-total-display">0.00</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+                <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
+                    <button class="btn btn-warning" onclick="updateInvoice()">💾 تحديث الفاتورة</button>
+                    <button class="btn btn-outline" onclick="switchInvoiceTab('invoices-list')">↩️ إلغاء</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- صفحة المخزون -->
+    <!-- ========================================================= -->
+    <div id="page-inventory" class="page">
+        <h2>📦 إدارة المخزون</h2>
+        <div class="tab-group" id="inventoryTabs">
+            <button class="tab-btn active" onclick="switchInventoryTab('add-material')">➕ إضافة مادة</button>
+            <button class="tab-btn" onclick="switchInventoryTab('materials-list')">📋 قائمة المواد</button>
+            <button class="tab-btn" onclick="switchInventoryTab('edit-material')">✏️ تعديل مادة</button>
+            <button class="tab-btn" onclick="switchInventoryTab('inventory-count')">📊 جرد المواد</button>
+            <button class="tab-btn" onclick="switchInventoryTab('barcode-designer')">🏷️ مصمم الباركود</button>
+        </div>
+        <!-- باقي محتوى المخزون (مختصر) -->
+        <div class="tab-panel active" id="panel-add-material">
+            <div class="card">
+                <h4 class="card-title">➕ إضافة مادة جديدة</h4>
+                <div class="flex-row">
+                    <div class="field"><label>اسم المادة *</label><input id="mat-name" placeholder="اسم المادة"></div>
+                    <div class="field"><label>الصنف *</label><select id="mat-category"></select></div>
+                    <div class="field"><label>الوحدة *</label><select id="mat-unit"></select></div>
+                </div>
+                <div class="flex-row">
+                    <div class="field"><label>سعر الكلفة *</label><input id="mat-cost" type="number" step="0.01" placeholder="0.00"></div>
+                    <div class="field"><label>عملة الكلفة</label><select id="mat-cost-currency"></select></div>
+                    <div class="field"><label>سعر المبيع *</label><input id="mat-sell" type="number" step="0.01" placeholder="0.00"></div>
+                    <div class="field"><label>عملة المبيع</label><select id="mat-sell-currency"></select></div>
+                </div>
+                <div class="flex-row">
+                    <div class="field"><label>الكمية الأولية</label><input id="mat-qty" type="number" value="0"></div>
+                    <div class="field"><label>الحد الأدنى للتنبيه</label><input id="mat-min-qty" type="number" value="5"></div>
+                    <div class="field"><label>رمز الباركود</label>
+                        <div style="display:flex;gap:8px;">
+                            <input id="mat-barcode" placeholder="تلقائي أو يدوي" style="flex:1;">
+                            <button class="btn btn-primary btn-sm" onclick="generateBarcodeNumber()">🔃 توليد</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div class="field"><label>ملاحظات</label><input id="mat-notes" placeholder="ملاحظات إضافية"></div>
+                    <div class="field" style="flex:0 0 auto;"><button class="btn btn-success" onclick="saveMaterial()">💾 حفظ المادة</button></div>
+                </div>
+                <div id="barcode-preview" class="barcode-preview" style="margin-top:15px;display:none;">
+                    <div class="barcode-item"><svg id="barcode-svg"></svg><div style="margin-top:8px;font-weight:bold;" id="barcode-label"></div></div>
+                    <button class="btn btn-primary btn-sm" onclick="printBarcode()">🖨️ طباعة الباركود</button>
+                </div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-materials-list">
+            <div class="card">
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:15px;">
+                    <input type="text" id="search-material" class="search-box" placeholder="🔍 بحث عن مادة" oninput="loadMaterials()">
+                    <button class="btn btn-primary btn-sm" onclick="switchInventoryTab('add-material')">➕ مادة جديدة</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>#</th><th>الاسم</th><th>الصنف</th><th>الوحدة</th><th>سعر الكلفة</th><th>سعر المبيع</th><th>الكمية</th><th>الباركود</th><th>الإجراء</th></tr></thead>
+                        <tbody id="materials-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-edit-material">
+            <div class="card">
+                <h4 class="card-title">✏️ تعديل المادة</h4>
+                <input type="hidden" id="edit-mat-id">
+                <div class="flex-row">
+                    <div class="field"><label>اسم المادة *</label><input id="edit-mat-name" placeholder="اسم المادة"></div>
+                    <div class="field"><label>الصنف *</label><select id="edit-mat-category"></select></div>
+                    <div class="field"><label>الوحدة *</label><select id="edit-mat-unit"></select></div>
+                </div>
+                <div class="flex-row">
+                    <div class="field"><label>سعر الكلفة *</label><input id="edit-mat-cost" type="number" step="0.01" placeholder="0.00"></div>
+                    <div class="field"><label>عملة الكلفة</label><select id="edit-mat-cost-currency"></select></div>
+                    <div class="field"><label>سعر المبيع *</label><input id="edit-mat-sell" type="number" step="0.01" placeholder="0.00"></div>
+                    <div class="field"><label>عملة المبيع</label><select id="edit-mat-sell-currency"></select></div>
+                </div>
+                <div class="flex-row">
+                    <div class="field"><label>الكمية</label><input id="edit-mat-qty" type="number" value="0"></div>
+                    <div class="field"><label>الحد الأدنى للتنبيه</label><input id="edit-mat-min-qty" type="number" value="5"></div>
+                    <div class="field"><label>رمز الباركود</label><input id="edit-mat-barcode"></div>
+                </div>
+                <div class="flex-row">
+                    <div class="field"><label>ملاحظات</label><input id="edit-mat-notes" placeholder="ملاحظات إضافية"></div>
+                    <div class="field" style="flex:0 0 auto;">
+                        <button class="btn btn-success" onclick="updateMaterial()">💾 تحديث</button>
+                        <button class="btn btn-outline" onclick="switchInventoryTab('materials-list')">↩️ إلغاء</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-inventory-count">
+            <div class="card">
+                <h4 class="card-title">📊 جرد المواد</h4>
+                <div class="flex-row" style="margin-bottom:15px;">
+                    <div class="field"><label>بحث عن مادة</label><input type="text" id="count-material-search" class="search-box" placeholder="🔍 ابحث عن مادة" oninput="loadInventoryCount()"></div>
+                    <div class="field"><label>اختر الزبون</label><select id="count-customer" onchange="loadInventoryCount()"><option value="all">الكل</option></select></div>
+                    <div class="field"><label>التاريخ</label><input id="count-date" type="date"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="loadInventoryCount()">عرض الجرد</button></div>
+                </div>
+                <div id="count-result"><p style="color:#94a3b8;">اختر زبوناً لعرض جرد المواد.</p></div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-barcode-designer">
+            <div class="card">
+                <h4 class="card-title">🏷️ مصمم الباركود</h4>
+                <div class="flex-row">
+                    <div class="field"><label>نص الباركود</label><input id="design-barcode-text" placeholder="أدخل النص أو الرقم"></div>
+                    <div class="field"><label>حجم الخط</label><select id="design-font-size"><option value="14">صغير</option><option value="20" selected>متوسط</option><option value="26">كبير</option><option value="32">كبير جداً</option></select></div>
+                    <div class="field"><label>الارتفاع</label><select id="design-height"><option value="60">صغير</option><option value="80" selected>متوسط</option><option value="100">كبير</option><option value="120">كبير جداً</option></select></div>
+                    <div class="field"><label>العرض</label><select id="design-width"><option value="1.5">رفيع</option><option value="2" selected>متوسط</option><option value="2.5">عريض</option></select></div>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:10px;">
+                    <button class="btn btn-primary" onclick="designBarcode()">🔃 توليد الباركود</button>
+                    <button class="btn btn-success" onclick="printDesignBarcode()">🖨️ طباعة</button>
+                    <button class="btn btn-warning" onclick="downloadDesignBarcode()">💾 تحميل SVG</button>
+                </div>
+                <div id="design-barcode-preview" class="barcode-preview" style="margin-top:15px;"><p style="color:#94a3b8;">أدخل النص واضغط توليد الباركود</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- صفحة الحسابات (مختصرة) -->
+    <!-- ========================================================= -->
+    <div id="page-accounts" class="page">
+        <h2>🏦 الحسابات والمصروفات</h2>
+        <div class="tab-group" id="accountsTabs">
+            <button class="tab-btn active" onclick="switchAccountTab('accounts-list')">📋 قائمة الحسابات</button>
+            <button class="tab-btn" onclick="switchAccountTab('new-account')">➕ حساب جديد</button>
+            <button class="tab-btn" onclick="switchAccountTab('edit-account')">✏️ تعديل حساب</button>
+            <button class="tab-btn" onclick="switchAccountTab('journal')">📒 دفتر الأستاذ</button>
+            <button class="tab-btn" onclick="switchAccountTab('entry')">💵 سندات قبض/دفع</button>
+            <button class="tab-btn" onclick="switchAccountTab('edit-entry')">✏️ تعديل سند</button>
+            <button class="tab-btn" onclick="switchAccountTab('expense')">📝 مصاريف وإيرادات</button>
+            <button class="tab-btn" onclick="switchAccountTab('statement')">📄 كشف حساب</button>
+        </div>
+        <!-- قائمة الحسابات -->
+        <div class="tab-panel active" id="panel-accounts-list">
+            <div class="card">
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:15px;">
+                    <input type="text" id="search-account" class="search-box" placeholder="🔍 بحث ذكي (اسم، نوع، هاتف، عملة)" oninput="loadAccounts()">
+                    <button class="btn btn-primary btn-sm" onclick="switchAccountTab('new-account')">➕ حساب جديد</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>الهاتف</th><th>العملة</th><th>الرصيد</th><th>الإجراء</th></tr></thead>
+                        <tbody id="accounts-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- إضافة حساب -->
+        <div class="tab-panel" id="panel-new-account">
+            <div class="card">
+                <h4 class="card-title">➕ حساب جديد</h4>
+                <div class="flex-row">
+                    <div class="field"><label>اسم الحساب *</label><input id="acc-name" placeholder="مثال: محمد علي"></div>
+                    <div class="field"><label>النوع *</label><select id="acc-type"><option value="customer">زبون</option><option value="supplier">مورد</option><option value="expense">مصروف</option><option value="revenue">إيراد</option></select></div>
+                    <div class="field"><label>رقم الهاتف</label><input id="acc-phone" placeholder="مثال: 0933123456"></div>
+                    <div class="field"><label>العملة *</label><select id="acc-currency"></select></div>
+                    <div class="field"><label>الرصيد الافتتاحي</label><input id="acc-balance" type="number" step="0.01" value="0"></div>
+                </div>
+                <button class="btn btn-success" onclick="saveAccount()">💾 حفظ الحساب</button>
+            </div>
+        </div>
+        <!-- تعديل حساب -->
+        <div class="tab-panel" id="panel-edit-account">
+            <div class="card">
+                <h4 class="card-title">✏️ تعديل الحساب</h4>
+                <input type="hidden" id="edit-acc-id">
+                <div class="flex-row">
+                    <div class="field"><label>اسم الحساب *</label><input id="edit-acc-name" placeholder="اسم الحساب"></div>
+                    <div class="field"><label>النوع *</label><select id="edit-acc-type"><option value="customer">زبون</option><option value="supplier">مورد</option><option value="expense">مصروف</option><option value="revenue">إيراد</option></select></div>
+                    <div class="field"><label>رقم الهاتف</label><input id="edit-acc-phone" placeholder="رقم الهاتف"></div>
+                    <div class="field"><label>العملة *</label><select id="edit-acc-currency"></select></div>
+                    <div class="field"><label>الرصيد</label><input id="edit-acc-balance" type="number" step="0.01" value="0"></div>
+                </div>
+                <button class="btn btn-success" onclick="updateAccount()">💾 تحديث الحساب</button>
+                <button class="btn btn-outline" onclick="switchAccountTab('accounts-list')">↩️ إلغاء</button>
+            </div>
+        </div>
+        <!-- دفتر الأستاذ -->
+        <div class="tab-panel" id="panel-journal">
+            <div class="card">
+                <h4 class="card-title">📒 دفتر الأستاذ</h4>
+                <div class="flex-row" style="margin-bottom:10px;">
+                    <div class="field"><label>تصفية حسب الحساب</label><select id="journal-filter-account" onchange="loadJournal()"><option value="all">الكل</option></select></div>
+                    <div class="field"><label>نوع الحركة</label><select id="journal-filter-type" onchange="loadJournal()"><option value="all">الكل</option><option value="receipt">سند قبض</option><option value="payment">سند دفع</option><option value="expense">مصروف</option><option value="revenue">إيراد</option></select></div>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الحساب</th><th>الوصف</th><th>مدين</th><th>دائن</th><th>النوع</th></tr></thead><tbody id="journal-table-body"></tbody></table></div>
+            </div>
+        </div>
+        <!-- سندات قبض/دفع -->
+        <div class="tab-panel" id="panel-entry">
+            <div class="card">
+                <h4 class="card-title">💵 تسجيل سند قبض أو دفع</h4>
+                <div class="flex-row">
+                    <div class="field"><label>نوع السند *</label><select id="entry-type"><option value="receipt">قبض</option><option value="payment">دفع</option></select></div>
+                    <div class="field"><label>الحساب *</label><select id="entry-account" onchange="loadEntriesList()"></select></div>
+                    <div class="field"><label>المبلغ *</label><input id="entry-amount" type="number" step="0.01" placeholder="0.00"></div>
+                    <div class="field"><label>التاريخ</label><input id="entry-date" type="date"></div>
+                </div>
+                <div class="field"><label>الوصف</label><input id="entry-desc" placeholder="وصف الحركة"></div>
+                <button class="btn btn-primary" onclick="saveEntry()">💾 تسجيل السند</button>
+            </div>
+            <div class="card"><h4 class="card-title">📋 سندات هذا الحساب</h4><div id="entries-list"></div></div>
+        </div>
+        <!-- تعديل سند -->
+        <div class="tab-panel" id="panel-edit-entry">
+            <div class="card">
+                <h4 class="card-title">✏️ تعديل السند</h4>
+                <input type="hidden" id="edit-entry-id">
+                <div class="flex-row">
+                    <div class="field"><label>نوع السند *</label><select id="edit-entry-type"><option value="receipt">قبض</option><option value="payment">دفع</option></select></div>
+                    <div class="field"><label>الحساب *</label><select id="edit-entry-account"></select></div>
+                    <div class="field"><label>المبلغ *</label><input id="edit-entry-amount" type="number" step="0.01" placeholder="0.00"></div>
+                    <div class="field"><label>التاريخ</label><input id="edit-entry-date" type="date"></div>
+                </div>
+                <div class="field"><label>الوصف</label><input id="edit-entry-desc" placeholder="وصف الحركة"></div>
+                <button class="btn btn-warning" onclick="updateEntry()">💾 تحديث السند</button>
+                <button class="btn btn-outline" onclick="switchAccountTab('entry')">↩️ إلغاء</button>
+            </div>
+        </div>
+        <!-- مصاريف وإيرادات -->
+        <div class="tab-panel" id="panel-expense">
+            <div class="card">
+                <h4 class="card-title">📝 تسجيل مصروف أو إيراد</h4>
+                <div class="flex-row">
+                    <div class="field"><label>النوع *</label><select id="expense-type" onchange="updateExpenseAccounts()"><option value="expense">مصروف</option><option value="revenue">إيراد</option></select></div>
+                    <div class="field"><label>الحساب</label><select id="expense-account" onchange="loadExpenseEntries()"><option value="">-- بدون حساب --</option></select></div>
+                    <div class="field"><label>المبلغ *</label><input id="expense-amount" type="number" step="0.01" placeholder="0.00"></div>
+                    <div class="field"><label>التاريخ</label><input id="expense-date" type="date"></div>
+                </div>
+                <div class="field"><label>البيان</label><input id="expense-desc" placeholder="وصف المصروف/الإيراد"></div>
+                <button class="btn btn-warning" onclick="saveExpense()">💾 تسجيل</button>
+            </div>
+            <div class="card"><h4 class="card-title">📋 سندات هذا الحساب</h4><div id="expense-entries-list"></div></div>
+        </div>
+        <!-- كشف حساب -->
+        <div class="tab-panel" id="panel-statement">
+            <div class="card">
+                <h4 class="card-title">📄 كشف حساب</h4>
+                <div class="flex-row">
+                    <div class="field"><label>اختر الحساب *</label><select id="statement-account" onchange="loadStatement()"></select></div>
+                    <div class="field"><label>من تاريخ</label><input id="statement-from" type="date"></div>
+                    <div class="field"><label>إلى تاريخ</label><input id="statement-to" type="date"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="loadStatement()">عرض</button></div>
+                </div>
+                <div id="statement-result"><p style="color:#94a3b8;">اختر حساباً لعرض كشف الحساب.</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- صفحة الإعدادات -->
+    <!-- ========================================================= -->
+    <div id="page-settings" class="page">
+        <h2>⚙️ الإعدادات المتقدمة</h2>
+        <div class="tab-group" id="settingsTabs">
+            <button class="tab-btn active" onclick="switchSettingsTab('general')">عام</button>
+            <button class="tab-btn" onclick="switchSettingsTab('currencies')">العملات</button>
+            <button class="tab-btn" onclick="switchSettingsTab('taxes')">الضرائب</button>
+            <button class="tab-btn" onclick="switchSettingsTab('users')">المستخدمون</button>
+            <button class="tab-btn" onclick="switchSettingsTab('units')">الوحدات</button>
+            <button class="tab-btn" onclick="switchSettingsTab('categories')">التصنيفات</button>
+            <button class="tab-btn" onclick="switchSettingsTab('printing')">الطباعة والشعار</button>
+        </div>
+        <!-- محتوى الإعدادات مختصر -->
+        <div class="tab-panel active" id="panel-general">
+            <div class="card">
+                <h4 class="card-title">🔐 الأمان</h4>
+                <label><input type="checkbox" id="enable-password" onchange="togglePassword()"> تفعيل كلمة السر</label>
+                <div id="password-fields" style="display:none; margin-top:10px;">
+                    <div class="flex-row">
+                        <div class="field"><label>كلمة السر الحالية</label><input type="password" id="current-pass" placeholder="الحالية"></div>
+                        <div class="field"><label>كلمة السر الجديدة</label><input type="password" id="new-pass" placeholder="الجديدة"></div>
+                        <div class="field"><label>تأكيد الجديدة</label><input type="password" id="confirm-pass" placeholder="تأكيد"></div>
+                        <div class="field" style="flex:0 0 auto;"><button class="btn btn-primary" onclick="changePassword()">تغيير</button></div>
+                    </div>
+                </div>
+                <hr style="margin:20px 0;">
+                <h4 class="card-title">🏢 بيانات الشركة</h4>
+                <div class="flex-row">
+                    <div class="field"><label>الاسم</label><input id="company-name"></div>
+                    <div class="field"><label>العنوان</label><input id="company-address"></div>
+                    <div class="field"><label>الهاتف</label><input id="company-phone"></div>
+                    <div class="field"><label>الرقم الضريبي</label><input id="company-tax"></div>
+                </div>
+                <button class="btn btn-success" onclick="saveCompany()">💾 حفظ</button>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-currencies">
+            <div class="card">
+                <h4 class="card-title">💱 العملات</h4>
+                <div class="flex-row">
+                    <div class="field"><label>الاسم</label><input id="cur-name" placeholder="دولار"></div>
+                    <div class="field"><label>الرمز</label><input id="cur-symbol" placeholder="$"></div>
+                    <div class="field"><label>سعر الصرف</label><input id="cur-rate" type="number" placeholder="15000"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="addCurrency()">➕ إضافة</button></div>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>الرمز</th><th>السعر</th><th>افتراضي</th><th>الإجراء</th></tr></thead><tbody id="currencies-table"></tbody></table></div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-taxes">
+            <div class="card">
+                <h4 class="card-title">🧾 الضرائب</h4>
+                <div class="flex-row">
+                    <div class="field"><label>الاسم</label><input id="tax-name" placeholder="ضريبة القيمة"></div>
+                    <div class="field"><label>النسبة %</label><input id="tax-rate" type="number" placeholder="15"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="addTax()">➕ إضافة</button></div>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>النسبة</th><th>مفعل</th><th>الإجراء</th></tr></thead><tbody id="taxes-table"></tbody></table></div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-users">
+            <div class="card">
+                <h4 class="card-title">👥 المستخدمون</h4>
+                <div class="flex-row">
+                    <div class="field"><label>اسم المستخدم</label><input id="user-name" placeholder="user"></div>
+                    <div class="field"><label>كلمة السر</label><input id="user-pass" type="password" placeholder="****"></div>
+                    <div class="field"><label>الدور</label><select id="user-role"><option value="user">مستخدم</option><option value="admin">مدير</option></select></div>
+                    <div class="field"><button class="btn btn-success" onclick="addUser()">➕ إضافة</button></div>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>#</th><th>اسم المستخدم</th><th>الدور</th><th>الإجراء</th></tr></thead><tbody id="users-table"></tbody></table></div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-units">
+            <div class="card">
+                <h4 class="card-title">📏 وحدات القياس</h4>
+                <div class="flex-row">
+                    <div class="field"><label>الاسم</label><input id="unit-name" placeholder="كيلوغرام"></div>
+                    <div class="field"><label>الاختصار</label><input id="unit-abbr" placeholder="كجم"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="addUnit()">➕ إضافة</button></div>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>الاختصار</th><th>الإجراء</th></tr></thead><tbody id="units-table"></tbody></table></div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-categories">
+            <div class="card">
+                <h4 class="card-title">📂 التصنيفات</h4>
+                <div class="flex-row">
+                    <div class="field"><label>اسم التصنيف</label><input id="cat-name-input" placeholder="مثال: إلكترونيات"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="addCategory()">➕ إضافة</button></div>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>عدد المواد</th><th>الإجراء</th></tr></thead><tbody id="categories-table-settings"></tbody></table></div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-printing">
+            <div class="card">
+                <h4 class="card-title">🖨️ تفضيلات الطباعة</h4>
+                <div class="flex-row">
+                    <div class="field"><label>حجم الخط</label><select id="print-font-size"><option value="12">صغير</option><option value="14" selected>متوسط</option><option value="16">كبير</option></select></div>
+                    <div class="field"><label>الاتجاه</label><select id="print-orientation"><option value="portrait">عمودي</option><option value="landscape">أفقي</option></select></div>
+                </div>
+                <hr>
+                <h4 class="card-title">🏷️ الشعار</h4>
+                <input type="file" accept="image/*" onchange="previewLogo(event)">
+                <div class="logo-preview" id="logo-preview">لا يوجد شعار</div>
+                <button class="btn btn-success" onclick="saveLogo()">💾 حفظ</button>
+                <button class="btn btn-danger" onclick="removeLogo()">🗑️ إزالة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- صفحة التقارير -->
+    <!-- ========================================================= -->
+    <div id="page-reports" class="page">
+        <h2>📊 التقارير</h2>
+        <div class="tab-group" id="reportsTabs">
+            <button class="tab-btn active" onclick="switchReportTab('profit-loss')">💰 الأرباح والخسائر</button>
+            <button class="tab-btn" onclick="switchReportTab('daily-movement')">📅 الحركة اليومية</button>
+            <button class="tab-btn" onclick="switchReportTab('budget')">⚖️ الميزانية ورأس المال</button>
+            <button class="tab-btn" onclick="switchReportTab('top-materials')">📦 المواد الأكثر حركة</button>
+            <button class="tab-btn" onclick="switchReportTab('top-customers')">👥 العملاء الأكثر حركة</button>
+            <button class="tab-btn" onclick="switchReportTab('low-stock')">⚠️ المواد التي وصلت الحد الأدنى</button>
+        </div>
+        <!-- محتوى التقارير مختصر -->
+        <div class="tab-panel active" id="panel-profit-loss">
+            <div class="card">
+                <h4 class="card-title">💰 الأرباح والخسائر</h4>
+                <div class="flex-row" style="margin-bottom:15px;">
+                    <div class="field"><label>من تاريخ</label><input id="pl-from" type="date"></div>
+                    <div class="field"><label>إلى تاريخ</label><input id="pl-to" type="date"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="loadProfitLoss()">عرض</button></div>
+                    <div class="field" style="flex:0 0 auto;">
+                        <button class="btn btn-print" onclick="printReport('profit-loss')">🖨️ طباعة</button>
+                        <button class="btn btn-share" onclick="shareReport('profit-loss')">📤 مشاركة</button>
+                    </div>
+                </div>
+                <div id="profit-loss-result"></div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-daily-movement">
+            <div class="card">
+                <h4 class="card-title">📅 الحركة اليومية</h4>
+                <div class="flex-row" style="margin-bottom:15px;">
+                    <div class="field"><label>التاريخ</label><input id="dm-date" type="date"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="loadDailyMovement()">عرض</button></div>
+                    <div class="field" style="flex:0 0 auto;">
+                        <button class="btn btn-print" onclick="printReport('daily-movement')">🖨️ طباعة</button>
+                        <button class="btn btn-share" onclick="shareReport('daily-movement')">📤 مشاركة</button>
+                    </div>
+                </div>
+                <div id="daily-movement-result"></div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-budget">
+            <div class="card">
+                <h4 class="card-title">⚖️ الميزانية ورأس المال</h4>
+                <div style="margin-bottom:15px;">
+                    <button class="btn btn-print" onclick="printReport('budget')">🖨️ طباعة</button>
+                    <button class="btn btn-share" onclick="shareReport('budget')">📤 مشاركة</button>
+                </div>
+                <div id="budget-result"></div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-top-materials">
+            <div class="card">
+                <h4 class="card-title">📦 المواد الأكثر حركة</h4>
+                <div class="flex-row" style="margin-bottom:15px;">
+                    <div class="field"><label>عدد النتائج</label><select id="top-materials-limit"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option><option value="50">50</option></select></div>
+                    <div class="field"><button class="btn btn-primary" onclick="loadTopMaterials()">عرض</button></div>
+                    <div class="field" style="flex:0 0 auto;">
+                        <button class="btn btn-print" onclick="printReport('top-materials')">🖨️ طباعة</button>
+                        <button class="btn btn-share" onclick="shareReport('top-materials')">📤 مشاركة</button>
+                    </div>
+                </div>
+                <div id="top-materials-result"></div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-top-customers">
+            <div class="card">
+                <h4 class="card-title">👥 العملاء الأكثر حركة</h4>
+                <div class="flex-row" style="margin-bottom:15px;">
+                    <div class="field"><label>عدد النتائج</label><select id="top-customers-limit"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option><option value="50">50</option></select></div>
+                    <div class="field"><button class="btn btn-primary" onclick="loadTopCustomers()">عرض</button></div>
+                    <div class="field" style="flex:0 0 auto;">
+                        <button class="btn btn-print" onclick="printReport('top-customers')">🖨️ طباعة</button>
+                        <button class="btn btn-share" onclick="shareReport('top-customers')">📤 مشاركة</button>
+                    </div>
+                </div>
+                <div id="top-customers-result"></div>
+            </div>
+        </div>
+        <div class="tab-panel" id="panel-low-stock">
+            <div class="card">
+                <h4 class="card-title">⚠️ المواد التي وصلت الحد الأدنى</h4>
+                <div style="margin-bottom:15px;">
+                    <button class="btn btn-print" onclick="printReport('low-stock')">🖨️ طباعة</button>
+                    <button class="btn btn-share" onclick="shareReport('low-stock')">📤 مشاركة</button>
+                </div>
+                <div id="low-stock-result"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- صفحة المزامنة -->
+    <!-- ========================================================= -->
+    <div id="page-sync" class="page">
+        <h2>☁️ النسخ الاحتياطي</h2>
+        <div class="card">
+            <button class="btn btn-primary" onclick="exportDB()">📤 تصدير</button>
+            <button class="btn btn-success" onclick="document.getElementById('importFile').click()">📥 استيراد</button>
+            <input type="file" id="importFile" accept=".sqlite" style="display:none" onchange="importDB(event)">
+            <div id="sync-status"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ================================================================
+    // 1. SQLite Core
+    // ================================================================
+    let SQL = null;
+    let db = null;
+    const DB_KEY = 'app_db';
+
+    function loadDB() {
+        try {
+            const saved = localStorage.getItem(DB_KEY);
+            if (saved) {
+                const binary = new Uint8Array(JSON.parse(saved));
+                return new SQL.Database(binary);
+            }
+        } catch (e) { console.warn('DB load failed, creating new.'); }
+        return new SQL.Database();
+    }
+
+    function saveDB() {
+        const data = db.export();
+        localStorage.setItem(DB_KEY, JSON.stringify(Array.from(data)));
+    }
+
+    function query(sql, params = []) {
+        try {
+            const stmt = db.prepare(sql);
+            stmt.bind(params);
+            const results = [];
+            while (stmt.step()) results.push(stmt.getAsObject());
+            stmt.free();
+            return results;
+        } catch (e) { console.error(e); return []; }
+    }
+
+    function run(sql, params = []) {
+        try {
+            db.run(sql, params);
+            saveDB();
+            return true;
+        } catch (e) { console.error(e); alert('خطأ: ' + e.message); return false; }
+    }
+
+    // ================================================================
+    // 2. Init DB
+    // ================================================================
+    function initDB() {
+        db.run(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`);
+        db.run(`CREATE TABLE IF NOT EXISTS currencies (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, symbol TEXT, exchange_rate REAL, is_default INTEGER DEFAULT 0)`);
+        db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password_hash TEXT, role TEXT)`);
+        db.run(`CREATE TABLE IF NOT EXISTS units (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, abbreviation TEXT)`);
+        db.run(`CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE)`);
+        db.run(`CREATE TABLE IF NOT EXISTS company (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, logo TEXT, address TEXT, phone TEXT, tax_number TEXT)`);
+        db.run(`CREATE TABLE IF NOT EXISTS taxes (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, rate REAL, is_active INTEGER DEFAULT 1)`);
+        
+        db.run(`CREATE TABLE IF NOT EXISTS materials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            category_id INTEGER,
+            unit_id INTEGER,
+            cost_price REAL DEFAULT 0,
+            cost_currency_id INTEGER,
+            sell_price REAL DEFAULT 0,
+            sell_currency_id INTEGER,
+            quantity REAL DEFAULT 0,
+            min_quantity REAL DEFAULT 5,
+            barcode TEXT,
+            notes TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )`);
+        try { db.run("ALTER TABLE materials ADD COLUMN unit_id INTEGER"); } catch(e) {}
+        try { db.run("ALTER TABLE materials ADD COLUMN cost_currency_id INTEGER"); } catch(e) {}
+        try { db.run("ALTER TABLE materials ADD COLUMN sell_currency_id INTEGER"); } catch(e) {}
+        try { db.run("ALTER TABLE materials ADD COLUMN min_quantity REAL DEFAULT 5"); } catch(e) {}
+        try { db.run("ALTER TABLE materials ADD COLUMN notes TEXT"); } catch(e) {}
+        
+        db.run(`CREATE TABLE IF NOT EXISTS invoices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT,
+            account_id INTEGER,
+            currency_id INTEGER,
+            date TEXT,
+            due_date TEXT,
+            payment TEXT DEFAULT 'cash',
+            note TEXT,
+            total REAL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )`);
+        try { db.run("ALTER TABLE invoices ADD COLUMN account_id INTEGER"); } catch(e) {}
+        try { db.run("ALTER TABLE invoices ADD COLUMN currency_id INTEGER"); } catch(e) {}
+        try { db.run("ALTER TABLE invoices ADD COLUMN due_date TEXT"); } catch(e) {}
+        try { db.run("ALTER TABLE invoices ADD COLUMN payment TEXT DEFAULT 'cash'"); } catch(e) {}
+        
+        db.run(`CREATE TABLE IF NOT EXISTS invoice_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            invoice_id INTEGER,
+            material_id INTEGER,
+            quantity REAL,
+            price REAL,
+            total REAL
+        )`);
+        try { db.run("ALTER TABLE invoice_items ADD COLUMN total REAL"); } catch(e) {}
+        
+        db.run(`CREATE TABLE IF NOT EXISTS inventory_counts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            material_id INTEGER,
+            customer_id INTEGER,
+            date TEXT,
+            counted_quantity REAL,
+            system_quantity REAL,
+            difference REAL,
+            notes TEXT
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            type TEXT,
+            currency_id INTEGER,
+            phone TEXT,
+            balance REAL DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )`);
+        try { db.run("ALTER TABLE accounts ADD COLUMN phone TEXT"); } catch(e) {}
+
+        db.run(`CREATE TABLE IF NOT EXISTS journal_entries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER,
+            date TEXT,
+            description TEXT,
+            debit REAL DEFAULT 0,
+            credit REAL DEFAULT 0,
+            reference TEXT,
+            entry_type TEXT
+        )`);
+
+        if (db.exec("SELECT COUNT(*) FROM currencies")[0].values[0][0] === 0) {
+            db.run("INSERT INTO currencies (name, symbol, exchange_rate, is_default) VALUES ('ليرة سورية', 'ل.س', 1, 1)");
+            db.run("INSERT INTO currencies (name, symbol, exchange_rate, is_default) VALUES ('دولار أمريكي', '$', 15000, 0)");
+            db.run("INSERT INTO currencies (name, symbol, exchange_rate, is_default) VALUES ('يورو', '€', 16000, 0)");
+        }
+        if (db.exec("SELECT COUNT(*) FROM units")[0].values[0][0] === 0) {
+            db.run("INSERT INTO units (name, abbreviation) VALUES ('قطعة', 'قطعة')");
+            db.run("INSERT INTO units (name, abbreviation) VALUES ('كيلوغرام', 'كجم')");
+            db.run("INSERT INTO units (name, abbreviation) VALUES ('لتر', 'لتر')");
+            db.run("INSERT INTO units (name, abbreviation) VALUES ('علبة', 'علبة')");
+            db.run("INSERT INTO units (name, abbreviation) VALUES ('كرتونة', 'كرتونة')");
+        }
+        if (db.exec("SELECT COUNT(*) FROM users")[0].values[0][0] === 0) {
+            db.run("INSERT INTO users (username, password_hash, role) VALUES ('admin', 'admin', 'admin')");
+        }
+        if (db.exec("SELECT COUNT(*) FROM taxes")[0].values[0][0] === 0) {
+            db.run("INSERT INTO taxes (name, rate, is_active) VALUES ('ضريبة القيمة المضافة', 15, 1)");
+        }
+        if (db.exec("SELECT COUNT(*) FROM categories")[0].values[0][0] === 0) {
+            db.run("INSERT INTO categories (name) VALUES ('عام')");
+            db.run("INSERT INTO categories (name) VALUES ('إلكترونيات')");
+            db.run("INSERT INTO categories (name) VALUES ('أثاث')");
+            db.run("INSERT INTO categories (name) VALUES ('مواد غذائية')");
+        }
+        if (db.exec("SELECT COUNT(*) FROM accounts")[0].values[0][0] === 0) {
+            db.run("INSERT INTO accounts (name, type, currency_id, balance) VALUES ('زبون عام', 'customer', 1, 0)");
+            db.run("INSERT INTO accounts (name, type, currency_id, balance) VALUES ('مورد عام', 'supplier', 1, 0)");
+        }
+        db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('enable_password', '0')");
+        db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('password_hash', '')");
+        db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('print_font_size', '14')");
+        db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('print_orientation', 'portrait')");
+
+        saveDB();
+    }
+
+    // ================================================================
+    // 3. دوال الطباعة والمشاركة
+    // ================================================================
+    
+    // 3.1 الحصول على محتوى التقرير للطباعة
+    function getReportContent(reportId) {
+        let content = '';
+        switch(reportId) {
+            case 'profit-loss':
+                content = document.getElementById('profit-loss-result').innerHTML;
+                break;
+            case 'daily-movement':
+                content = document.getElementById('daily-movement-result').innerHTML;
+                break;
+            case 'budget':
+                content = document.getElementById('budget-result').innerHTML;
+                break;
+            case 'top-materials':
+                content = document.getElementById('top-materials-result').innerHTML;
+                break;
+            case 'top-customers':
+                content = document.getElementById('top-customers-result').innerHTML;
+                break;
+            case 'low-stock':
+                content = document.getElementById('low-stock-result').innerHTML;
+                break;
+        }
+        return content;
+    }
+
+    // 3.2 طباعة التقرير
+    window.printReport = function(reportId) {
+        const content = getReportContent(reportId);
+        if (!content || content.includes('لا توجد')) {
+            alert('لا يوجد محتوى للطباعة');
+            return;
+        }
+        
+        const company = query("SELECT * FROM company LIMIT 1")[0];
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>تقرير - ${reportId}</title>
+                <style>
+                    body { font-family: system-ui, sans-serif; padding: 40px; direction: rtl; }
+                    .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
+                    .header h1 { font-size: 24px; margin: 0; }
+                    .header .sub { color: #64748b; font-size: 14px; }
+                    .footer { text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 20px; font-size: 12px; color: #64748b; }
+                    .report-section { margin-bottom: 20px; }
+                    .report-section h4 { margin-bottom: 10px; }
+                    .report-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px; }
+                    .report-summary .item { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; }
+                    .report-summary .item .label { color: #64748b; font-size: 13px; }
+                    .report-summary .item .value { font-size: 22px; font-weight: 700; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; }
+                    th { background: #f8fafc; font-weight: 700; }
+                    .badge { padding: 2px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+                    .badge.green { background: #dcfce7; color: #15803d; }
+                    .badge.red { background: #fee2e2; color: #b91c1c; }
+                    .badge.yellow { background: #fef9c3; color: #854d0e; }
+                    @media print {
+                        body { padding: 20px; }
+                        .no-print { display: none !important; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    ${company?.logo ? `<img src="${company.logo}" style="max-height:60px;margin-bottom:10px;">` : ''}
+                    <h1>${company?.name || 'تقرير المحاسبة'}</h1>
+                    <div class="sub">${company?.address || ''} ${company?.phone ? '| هاتف: ' + company.phone : ''}</div>
+                    <div class="sub">تاريخ التقرير: ${new Date().toLocaleDateString()}</div>
+                </div>
+                <div class="report-section">
+                    ${content}
+                </div>
+                <div class="footer">
+                    ${company?.name || 'نظام المحاسبة'} - تم إنشاؤه بواسطة النظام المتكامل
+                </div>
+                <script>
+                    setTimeout(() => { window.print(); }, 500);
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    };
+
+    // 3.3 مشاركة التقرير (PDF)
+    window.shareReport = function(reportId) {
+        const content = getReportContent(reportId);
+        if (!content || content.includes('لا توجد')) {
+            alert('لا يوجد محتوى للمشاركة');
+            return;
+        }
+        
+        const company = query("SELECT * FROM company LIMIT 1")[0];
+        const element = document.createElement('div');
+        element.innerHTML = `
+            <div style="padding:20px;font-family:system-ui;direction:rtl;">
+                <div style="text-align:center;border-bottom:2px solid #0f172a;padding-bottom:15px;margin-bottom:20px;">
+                    ${company?.logo ? `<img src="${company.logo}" style="max-height:60px;margin-bottom:10px;">` : ''}
+                    <h2>${company?.name || 'تقرير المحاسبة'}</h2>
+                    <div style="color:#64748b;font-size:14px;">${company?.address || ''} ${company?.phone ? '| هاتف: ' + company.phone : ''}</div>
+                    <div style="color:#64748b;font-size:14px;">تاريخ التقرير: ${new Date().toLocaleDateString()}</div>
+                </div>
+                ${content}
+                <div style="text-align:center;border-top:1px solid #e2e8f0;padding-top:15px;margin-top:20px;font-size:12px;color:#64748b;">
+                    ${company?.name || 'نظام المحاسبة'} - تم إنشاؤه بواسطة النظام المتكامل
+                </div>
+            </div>
+        `;
+        
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: `تقرير_${reportId}_${new Date().toISOString().slice(0,10)}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        
+        html2pdf().set(opt).from(element).save()
+            .then(() => {
+                // محاولة مشاركة عبر Web Share API
+                if (navigator.share) {
+                    navigator.share({
+                        title: `تقرير ${reportId}`,
+                        text: `تقرير ${reportId} من نظام المحاسبة`,
+                        url: window.location.href
+                    }).catch(() => {});
+                }
+            })
+            .catch(err => {
+                alert('حدث خطأ أثناء إنشاء PDF: ' + err.message);
+            });
+    };
+
+    // 3.4 طباعة فاتورة
+    window.printInvoice = function(invoiceId) {
+        const inv = query("SELECT * FROM invoices WHERE id = ?", [invoiceId])[0];
+        if (!inv) return alert('الفاتورة غير موجودة');
+        const items = query("SELECT * FROM invoice_items WHERE invoice_id = ?", [invoiceId]);
+        const acc = query("SELECT * FROM accounts WHERE id = ?", [inv.account_id])[0];
+        const cur = query("SELECT * FROM currencies WHERE id = ?", [inv.currency_id])[0];
+        const company = query("SELECT * FROM company LIMIT 1")[0];
+        
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        let itemsHtml = items.map((item, i) => {
+            const mat = query("SELECT name FROM materials WHERE id = ?", [item.material_id])[0];
+            return `<tr>
+                <td>${i+1}</td>
+                <td>${mat?.name || 'محذوف'}</td>
+                <td>${item.quantity}</td>
+                <td>${item.price.toFixed(2)}</td>
+                <td>${item.total.toFixed(2)}</td>
+            </tr>`;
+        }).join('');
+        
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>فاتورة #${inv.id}</title>
+                <style>
+                    body { font-family: system-ui, sans-serif; padding: 40px; direction: rtl; max-width: 800px; margin: 0 auto; }
+                    .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
+                    .header h1 { font-size: 24px; margin: 0; }
+                    .info { display: flex; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; }
+                    .info div { margin-bottom: 5px; }
+                    .info .label { color: #64748b; font-weight: 600; }
+                    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                    th, td { padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; }
+                    th { background: #f8fafc; font-weight: 700; }
+                    .total-row td { background: #f1f5f9; font-weight: 700; font-size: 16px; }
+                    .footer { text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 20px; font-size: 12px; color: #64748b; }
+                    .badge { padding: 2px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+                    .badge.green { background: #dcfce7; color: #15803d; }
+                    .badge.yellow { background: #fef9c3; color: #854d0e; }
+                    @media print { body { padding: 20px; } }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    ${company?.logo ? `<img src="${company.logo}" style="max-height:60px;margin-bottom:10px;">` : ''}
+                    <h1>${company?.name || 'فاتورة'}</h1>
+                    <div style="color:#64748b;">${company?.address || ''} ${company?.phone ? '| هاتف: ' + company.phone : ''}</div>
+                </div>
+                <div class="info">
+                    <div>
+                        <div><span class="label">رقم الفاتورة:</span> #${inv.id}</div>
+                        <div><span class="label">التاريخ:</span> ${new Date(inv.date).toLocaleDateString()}</div>
+                        ${inv.due_date ? `<div><span class="label">تاريخ الاستحقاق:</span> ${new Date(inv.due_date).toLocaleDateString()}</div>` : ''}
+                        <div><span class="label">نوع الفاتورة:</span> ${inv.type}</div>
+                    </div>
+                    <div>
+                        <div><span class="label">الحساب:</span> ${acc?.name || 'غير محدد'}</div>
+                        <div><span class="label">العملة:</span> ${cur?.name || ''}</div>
+                        <div><span class="label">طريقة الدفع:</span> <span class="badge ${inv.payment === 'credit' ? 'yellow' : 'green'}">${inv.payment === 'credit' ? 'آجل' : 'نقدي'}</span></div>
+                        ${inv.note ? `<div><span class="label">ملاحظات:</span> ${inv.note}</div>` : ''}
+                    </div>
+                </div>
+                <table>
+                    <thead><tr><th>#</th><th>المادة</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead>
+                    <tbody>${itemsHtml}</tbody>
+                    <tfoot><tr class="total-row"><td colspan="4" style="text-align:left;">الإجمالي الكلي</td><td>${inv.total.toFixed(2)} ${cur?.symbol || ''}</td></tr></tfoot>
+                </table>
+                <div class="footer">
+                    ${company?.name || 'نظام المحاسبة'} - شكراً لتعاملكم معنا
+                </div>
+                <script>
+                    setTimeout(() => { window.print(); }, 500);
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    };
+
+    // 3.5 مشاركة فاتورة (PDF)
+    window.shareInvoice = function(invoiceId) {
+        const inv = query("SELECT * FROM invoices WHERE id = ?", [invoiceId])[0];
+        if (!inv) return alert('الفاتورة غير موجودة');
+        const items = query("SELECT * FROM invoice_items WHERE invoice_id = ?", [invoiceId]);
+        const acc = query("SELECT * FROM accounts WHERE id = ?", [inv.account_id])[0];
+        const cur = query("SELECT * FROM currencies WHERE id = ?", [inv.currency_id])[0];
+        const company = query("SELECT * FROM company LIMIT 1")[0];
+        
+        let itemsHtml = items.map((item, i) => {
+            const mat = query("SELECT name FROM materials WHERE id = ?", [item.material_id])[0];
+            return `<tr>
+                <td>${i+1}</td>
+                <td>${mat?.name || 'محذوف'}</td>
+                <td>${item.quantity}</td>
+                <td>${item.price.toFixed(2)}</td>
+                <td>${item.total.toFixed(2)}</td>
+            </tr>`;
+        }).join('');
+        
+        const element = document.createElement('div');
+        element.innerHTML = `
+            <div style="padding:20px;font-family:system-ui;direction:rtl;max-width:800px;margin:0 auto;">
+                <div style="text-align:center;border-bottom:2px solid #0f172a;padding-bottom:15px;margin-bottom:20px;">
+                    ${company?.logo ? `<img src="${company.logo}" style="max-height:60px;margin-bottom:10px;">` : ''}
+                    <h2>${company?.name || 'فاتورة'}</h2>
+                    <div style="color:#64748b;">${company?.address || ''} ${company?.phone ? '| هاتف: ' + company.phone : ''}</div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;">
+                    <div>
+                        <div><strong>رقم الفاتورة:</strong> #${inv.id}</div>
+                        <div><strong>التاريخ:</strong> ${new Date(inv.date).toLocaleDateString()}</div>
+                        ${inv.due_date ? `<div><strong>تاريخ الاستحقاق:</strong> ${new Date(inv.due_date).toLocaleDateString()}</div>` : ''}
+                        <div><strong>نوع الفاتورة:</strong> ${inv.type}</div>
+                    </div>
+                    <div>
+                        <div><strong>الحساب:</strong> ${acc?.name || 'غير محدد'}</div>
+                        <div><strong>العملة:</strong> ${cur?.name || ''}</div>
+                        <div><strong>طريقة الدفع:</strong> ${inv.payment === 'credit' ? 'آجل' : 'نقدي'}</div>
+                        ${inv.note ? `<div><strong>ملاحظات:</strong> ${inv.note}</div>` : ''}
+                    </div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;margin:15px 0;">
+                    <thead><tr style="background:#f8fafc;"><th style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">#</th><th style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">المادة</th><th style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">الكمية</th><th style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">سعر الوحدة</th><th style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">الإجمالي</th></tr></thead>
+                    <tbody>${itemsHtml}</tbody>
+                    <tfoot><tr style="background:#f1f5f9;font-weight:700;"><td colspan="4" style="padding:10px;text-align:left;">الإجمالي الكلي</td><td style="padding:10px;">${inv.total.toFixed(2)} ${cur?.symbol || ''}</td></tr></tfoot>
+                </table>
+                <div style="text-align:center;border-top:1px solid #e2e8f0;padding-top:15px;margin-top:20px;font-size:12px;color:#64748b;">
+                    ${company?.name || 'نظام المحاسبة'} - شكراً لتعاملكم معنا
+                </div>
+            </div>
+        `;
+        
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: `فاتورة_${inv.id}_${new Date().toISOString().slice(0,10)}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        
+        html2pdf().set(opt).from(element).save()
+            .then(() => {
+                if (navigator.share) {
+                    navigator.share({
+                        title: `فاتورة #${inv.id}`,
+                        text: `فاتورة رقم ${inv.id} - ${acc?.name || ''}`,
+                        url: window.location.href
+                    }).catch(() => {});
+                }
+            })
+            .catch(err => {
+                alert('حدث خطأ أثناء إنشاء PDF: ' + err.message);
+            });
+    };
+
+    // ================================================================
+    // 4. التنقل الرئيسي
+    // ================================================================
+    window.showPage = function(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const target = document.getElementById('page-' + pageId);
+        if (target) target.classList.add('active');
+        
+        document.querySelectorAll('.top-nav .nav-btn').forEach(btn => {
+            btn.classList.remove('active');
+            const text = btn.textContent.trim();
+            if (text === pageId || 
+                (pageId === 'dashboard' && text === 'الرئيسية') ||
+                (pageId === 'invoices' && text === 'الفواتير') ||
+                (pageId === 'inventory' && text === 'المخزون') ||
+                (pageId === 'accounts' && text === 'الحسابات') ||
+                (pageId === 'settings' && text === 'الإعدادات') ||
+                (pageId === 'reports' && text === 'التقارير') ||
+                (pageId === 'sync' && text === 'نسخ احتياطي')) {
+                btn.classList.add('active');
+            }
+        });
+        
+        if (pageId === 'dashboard') updateDashboard();
+        if (pageId === 'invoices') loadAllInvoiceData();
+        if (pageId === 'inventory') loadAllInventoryData();
+        if (pageId === 'accounts') loadAllAccountsData();
+        if (pageId === 'settings') loadAllSettings();
+        if (pageId === 'reports') loadAllReports();
+    };
+
+    // ================================================================
+    // 5. دوال مختصرة للصفحات الأخرى (لن يتم تكرارها هنا)
+    // ================================================================
+    // دوال Dashboard
+    function updateDashboard() {
+        const mats = query("SELECT * FROM materials");
+        document.getElementById('dash-materials').textContent = mats.length;
+        const stockVal = mats.reduce((s, m) => s + (m.quantity * m.cost_price), 0);
+        document.getElementById('dash-stock-value').textContent = stockVal.toFixed(2);
+        const accounts = query("SELECT * FROM accounts");
+        document.getElementById('dash-accounts').textContent = accounts.length;
+        const sales = query("SELECT total FROM invoices WHERE type = 'sale'");
+        const purchases = query("SELECT total FROM invoices WHERE type = 'purchase'");
+        const saleTotal = sales.reduce((s, r) => s + r.total, 0);
+        const purchaseTotal = purchases.reduce((s, r) => s + r.total, 0);
+        document.getElementById('dash-profit').textContent = (saleTotal - purchaseTotal).toFixed(2);
+        const recent = query("SELECT * FROM invoices ORDER BY id DESC LIMIT 5");
+        document.getElementById('dash-recent').innerHTML = recent.map(r =>
+            `<div style="padding:8px 0;border-bottom:1px solid #e2e8f0;">
+                #${r.id} ${r.type} - ${r.total.toFixed(2)} - ${new Date(r.date).toLocaleString()}
+                <button class="btn btn-primary btn-sm" onclick="printInvoice(${r.id})">🖨️</button>
+                <button class="btn btn-share btn-sm" onclick="shareInvoice(${r.id})">📤</button>
+            </div>`
+        ).join('') || 'لا توجد فواتير.';
+    }
+
+    // دوال الإعدادات (مختصرة)
+    function getSetting(key) {
+        const res = query("SELECT value FROM settings WHERE key = ?", [key]);
+        return res.length ? res[0].value : null;
+    }
+    function setSetting(key, val) {
+        run("INSERT OR REPLACE INTO settings (key, value) VALUES (?,?)", [key, val]);
+    }
+
+    window.switchSettingsTab = function(tabId) {
+        document.querySelectorAll('#settingsTabs .tab-btn').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#settingsTabs .tab-btn[onclick*="${tabId}"]`)?.classList.add('active');
+        document.querySelectorAll('#page-settings .tab-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById('panel-' + tabId);
+        if (panel) panel.classList.add('active');
+    };
+
+    function loadAllSettings() {
+        loadCurrencies();
+        loadTaxes();
+        loadUsers();
+        loadUnits();
+        loadCategoriesSettings();
+        loadSecurity();
+        loadCompany();
+        loadLogo();
+        loadPrintSettings();
+    }
+
+    // دوال الإعدادات الأساسية
+    function loadCurrencies() {
+        const rows = query("SELECT * FROM currencies ORDER BY id");
+        const tbody = document.getElementById('currencies-table');
+        if (!tbody) return;
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#94a3b8;">لا توجد عملات</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = rows.map((c, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td>${c.name}</td>
+                <td>${c.symbol}</td>
+                <td>${c.exchange_rate}</td>
+                <td>${c.is_default ? '✅' : ''}</td>
+                <td>
+                    ${!c.is_default ? `<button class="btn btn-primary btn-sm" onclick="setDefaultCur(${c.id})">تعيين</button>` : ''}
+                    <button class="btn btn-danger btn-sm" onclick="delCur(${c.id})">✖</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    window.addCurrency = function() {
+        const name = document.getElementById('cur-name').value.trim();
+        const symbol = document.getElementById('cur-symbol').value.trim();
+        const rate = parseFloat(document.getElementById('cur-rate').value);
+        if (!name || !symbol || isNaN(rate) || rate<=0) return alert('بيانات غير صحيحة');
+        if (run("INSERT INTO currencies (name, symbol, exchange_rate) VALUES (?,?,?)", [name, symbol, rate])) {
+            document.getElementById('cur-name').value = '';
+            document.getElementById('cur-symbol').value = '';
+            document.getElementById('cur-rate').value = '';
+            loadCurrencies();
+        }
+    };
+
+    window.setDefaultCur = function(id) {
+        if (!confirm('تعيين هذه العملة كافتراضية؟')) return;
+        db.run("BEGIN");
+        try {
+            db.run("UPDATE currencies SET is_default = 0");
+            db.run("UPDATE currencies SET is_default = 1 WHERE id = ?", [id]);
+            db.run("COMMIT");
+            saveDB();
+            loadCurrencies();
+        } catch(e) { db.run("ROLLBACK"); alert(e.message); }
+    };
+
+    window.delCur = function(id) {
+        const cur = query("SELECT is_default FROM currencies WHERE id = ?", [id])[0];
+        if (cur && cur.is_default) return alert('لا يمكن حذف العملة الافتراضية');
+        if (confirm('حذف؟')) {
+            run("DELETE FROM currencies WHERE id = ?", [id]);
+            loadCurrencies();
+        }
+    };
+
+    function loadTaxes() {
+        const rows = query("SELECT * FROM taxes ORDER BY id");
+        const tbody = document.getElementById('taxes-table');
+        if (!tbody) return;
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#94a3b8;">لا توجد ضرائب</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = rows.map((t, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td>${t.name}</td>
+                <td>${t.rate}%</td>
+                <td>${t.is_active ? '✅ مفعل' : '❌ غير مفعل'}</td>
+                <td>
+                    <button class="btn btn-warning btn-sm" onclick="toggleTax(${t.id})">${t.is_active ? 'إلغاء' : 'تفعيل'}</button>
+                    <button class="btn btn-danger btn-sm" onclick="delTax(${t.id})">✖</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    window.addTax = function() {
+        const name = document.getElementById('tax-name').value.trim();
+        const rate = parseFloat(document.getElementById('tax-rate').value);
+        if (!name || isNaN(rate) || rate<0) return alert('بيانات غير صحيحة');
+        if (run("INSERT INTO taxes (name, rate) VALUES (?,?)", [name, rate])) {
+            document.getElementById('tax-name').value = '';
+            document.getElementById('tax-rate').value = '';
+            loadTaxes();
+        }
+    };
+
+    window.toggleTax = function(id) {
+        const tax = query("SELECT is_active FROM taxes WHERE id = ?", [id])[0];
+        if (!tax) return;
+        const newVal = tax.is_active ? 0 : 1;
+        run("UPDATE taxes SET is_active = ? WHERE id = ?", [newVal, id]);
+        loadTaxes();
+    };
+
+    window.delTax = function(id) {
+        if (confirm('حذف الضريبة؟')) {
+            run("DELETE FROM taxes WHERE id = ?", [id]);
+            loadTaxes();
+        }
+    };
+
+    function loadUsers() {
+        const rows = query("SELECT id, username, role FROM users ORDER BY id");
+        const tbody = document.getElementById('users-table');
+        if (!tbody) return;
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">لا يوجد مستخدمون</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = rows.map((u, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td>${u.username}</td>
+                <td>${u.role}</td>
+                <td>${u.username !== 'admin' ? `<button class="btn btn-danger btn-sm" onclick="delUser(${u.id})">✖</button>` : ''}</td>
+            </tr>
+        `).join('');
+    }
+
+    window.addUser = function() {
+        const username = document.getElementById('user-name').value.trim();
+        const password = document.getElementById('user-pass').value;
+        const role = document.getElementById('user-role').value;
+        if (!username || !password) return alert('أدخل البيانات');
+        const hash = btoa(password);
+        if (run("INSERT INTO users (username, password_hash, role) VALUES (?,?,?)", [username, hash, role])) {
+            document.getElementById('user-name').value = '';
+            document.getElementById('user-pass').value = '';
+            loadUsers();
+            alert('✅ تمت الإضافة');
+        }
+    };
+
+    window.delUser = function(id) {
+        if (confirm('حذف المستخدم؟')) {
+            run("DELETE FROM users WHERE id = ?", [id]);
+            loadUsers();
+        }
+    };
+
+    function loadUnits() {
+        const rows = query("SELECT * FROM units ORDER BY id");
+        const tbody = document.getElementById('units-table');
+        if (!tbody) return;
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">لا توجد وحدات</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = rows.map((u, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td>${u.name}</td>
+                <td>${u.abbreviation}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="delUnit(${u.id})">✖</button></td>
+            </tr>
+        `).join('');
+    }
+
+    window.addUnit = function() {
+        const name = document.getElementById('unit-name').value.trim();
+        const abbr = document.getElementById('unit-abbr').value.trim();
+        if (!name || !abbr) return alert('أدخل البيانات');
+        if (run("INSERT INTO units (name, abbreviation) VALUES (?,?)", [name, abbr])) {
+            document.getElementById('unit-name').value = '';
+            document.getElementById('unit-abbr').value = '';
+            loadUnits();
+        }
+    };
+
+    window.delUnit = function(id) {
+        if (confirm('حذف الوحدة؟')) {
+            run("DELETE FROM units WHERE id = ?", [id]);
+            loadUnits();
+        }
+    };
+
+    function loadCategoriesSettings() {
+        const rows = query("SELECT c.*, COUNT(m.id) as material_count FROM categories c LEFT JOIN materials m ON m.category_id = c.id GROUP BY c.id ORDER BY c.name");
+        const tbody = document.getElementById('categories-table-settings');
+        if (!tbody) return;
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">لا توجد تصنيفات</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = rows.map((c, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td><strong>${c.name}</strong></td>
+                <td>${c.material_count}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="editCategory(${c.id}, '${c.name}')">✏️ تعديل</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteCategory(${c.id})">✖ حذف</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    window.addCategory = function() {
+        const name = document.getElementById('cat-name-input').value.trim();
+        if (!name) return alert('أدخل اسم التصنيف');
+        if (run("INSERT INTO categories (name) VALUES (?)", [name])) {
+            document.getElementById('cat-name-input').value = '';
+            loadCategoriesSettings();
+            alert('✅ تمت الإضافة');
+        }
+    };
+
+    window.editCategory = function(id, oldName) {
+        const newName = prompt('تعديل اسم التصنيف:', oldName);
+        if (newName && newName.trim() !== oldName) {
+            if (run("UPDATE categories SET name = ? WHERE id = ?", [newName.trim(), id])) {
+                loadCategoriesSettings();
+                alert('✅ تم التعديل');
+            }
+        }
+    };
+
+    window.deleteCategory = function(id) {
+        const count = query("SELECT COUNT(*) as cnt FROM materials WHERE category_id = ?", [id])[0].cnt;
+        if (count > 0) return alert(`لا يمكن حذف التصنيف لأنه يحتوي على ${count} مواد.`);
+        if (confirm('حذف التصنيف؟')) {
+            run("DELETE FROM categories WHERE id = ?", [id]);
+            loadCategoriesSettings();
+            alert('✅ تم الحذف');
+        }
+    };
+
+    function loadSecurity() {
+        const enabled = getSetting('enable_password') === '1';
+        document.getElementById('enable-password').checked = enabled;
+        document.getElementById('password-fields').style.display = enabled ? 'block' : 'none';
+    }
+
+    window.togglePassword = function() {
+        const checked = document.getElementById('enable-password').checked;
+        document.getElementById('password-fields').style.display = checked ? 'block' : 'none';
+        setSetting('enable_password', checked ? '1' : '0');
+    };
+
+    window.changePassword = function() {
+        const current = document.getElementById('current-pass').value;
+        const newPass = document.getElementById('new-pass').value;
+        const confirmPass = document.getElementById('confirm-pass').value;
+        if (!newPass || !confirmPass) return alert('أدخل كلمة السر الجديدة');
+        if (newPass !== confirmPass) return alert('غير متطابقة');
+        const stored = getSetting('password_hash');
+        if (stored && btoa(current) !== stored) return alert('كلمة السر الحالية غير صحيحة');
+        setSetting('password_hash', btoa(newPass));
+        alert('✅ تم التغيير');
+        document.getElementById('current-pass').value = '';
+        document.getElementById('new-pass').value = '';
+        document.getElementById('confirm-pass').value = '';
+    };
+
+    function loadCompany() {
+        const comp = query("SELECT * FROM company LIMIT 1")[0];
+        if (comp) {
+            document.getElementById('company-name').value = comp.name || '';
+            document.getElementById('company-address').value = comp.address || '';
+            document.getElementById('company-phone').value = comp.phone || '';
+            document.getElementById('company-tax').value = comp.tax_number || '';
+        }
+    }
+
+    window.saveCompany = function() {
+        const name = document.getElementById('company-name').value.trim();
+        const address = document.getElementById('company-address').value.trim();
+        const phone = document.getElementById('company-phone').value.trim();
+        const tax = document.getElementById('company-tax').value.trim();
+        const exists = query("SELECT id FROM company LIMIT 1")[0];
+        if (exists) {
+            run("UPDATE company SET name=?, address=?, phone=?, tax_number=? WHERE id=?", [name, address, phone, tax, exists.id]);
+        } else {
+            run("INSERT INTO company (name, address, phone, tax_number) VALUES (?,?,?,?)", [name, address, phone, tax]);
+        }
+        alert('✅ تم الحفظ');
+    };
+
+    let logoData = null;
+
+    window.previewLogo = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            logoData = ev.target.result;
+            document.getElementById('logo-preview').innerHTML = `<img src="${logoData}" alt="شعار">`;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    function loadLogo() {
+        const comp = query("SELECT logo FROM company LIMIT 1")[0];
+        if (comp && comp.logo) {
+            document.getElementById('logo-preview').innerHTML = `<img src="${comp.logo}" alt="شعار">`;
+            logoData = comp.logo;
+        }
+    }
+
+    window.saveLogo = function() {
+        if (!logoData) return alert('لم يتم اختيار شعار');
+        const exists = query("SELECT id FROM company LIMIT 1")[0];
+        if (exists) {
+            run("UPDATE company SET logo = ? WHERE id = ?", [logoData, exists.id]);
+        } else {
+            run("INSERT INTO company (logo) VALUES (?)", [logoData]);
+        }
+        alert('✅ تم حفظ الشعار');
+    };
+
+    window.removeLogo = function() {
+        if (!confirm('إزالة الشعار؟')) return;
+        const exists = query("SELECT id FROM company LIMIT 1")[0];
+        if (exists) run("UPDATE company SET logo = NULL WHERE id = ?", [exists.id]);
+        document.getElementById('logo-preview').innerHTML = 'لا يوجد شعار';
+        logoData = null;
+    };
+
+    function loadPrintSettings() {
+        const fontSize = getSetting('print_font_size') || '14';
+        const orientation = getSetting('print_orientation') || 'portrait';
+        document.getElementById('print-font-size').value = fontSize;
+        document.getElementById('print-orientation').value = orientation;
+        document.getElementById('print-font-size').onchange = function() {
+            setSetting('print_font_size', this.value);
+        };
+        document.getElementById('print-orientation').onchange = function() {
+            setSetting('print_orientation', this.value);
+        };
+    }
+
+    // دوال الحسابات (مختصرة)
+    window.switchAccountTab = function(tabId) {
+        document.querySelectorAll('#accountsTabs .tab-btn').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#accountsTabs .tab-btn[onclick*="${tabId}"]`)?.classList.add('active');
+        document.querySelectorAll('#page-accounts .tab-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById('panel-' + tabId);
+        if (panel) panel.classList.add('active');
+    };
+
+    function loadAllAccountsData() {
+        loadAccounts();
+        loadCurrenciesSelect();
+        loadJournal();
+        loadEntryForm();
+        loadExpenseForm();
+        loadStatementForm();
+    }
+
+    function getCurrencies() {
+        return query("SELECT * FROM currencies ORDER BY name");
+    }
+
+    function loadCurrenciesSelect() {
+        const currencies = getCurrencies();
+        const selects = ['acc-currency', 'edit-acc-currency'];
+        selects.forEach(id => {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            const val = sel.value;
+            sel.innerHTML = currencies.map(c => `<option value="${c.id}">${c.name} (${c.symbol})</option>`).join('');
+            if (val) sel.value = val;
+        });
+    }
+
+    function loadAccounts() {
+        const search = document.getElementById('search-account')?.value.toLowerCase() || '';
+        let sql = `SELECT a.*, c.name as currency_name, c.symbol as currency_symbol
+                   FROM accounts a
+                   LEFT JOIN currencies c ON a.currency_id = c.id
+                   WHERE 1=1`;
+        const params = [];
+        if (search) {
+            sql += ` AND (LOWER(a.name) LIKE ? OR LOWER(a.type) LIKE ? OR LOWER(a.phone) LIKE ? OR LOWER(c.name) LIKE ?)`;
+            const s = `%${search}%`;
+            params.push(s, s, s, s);
+        }
+        sql += ` ORDER BY a.id DESC`;
+        const rows = query(sql, params);
+        const tbody = document.getElementById('accounts-table-body');
+        if (!tbody) return;
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#94a3b8;">لا توجد حسابات</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = rows.map((acc, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td><strong>${acc.name}</strong></td>
+                <td><span class="badge ${acc.type === 'customer' ? 'blue' : acc.type === 'supplier' ? 'orange' : acc.type === 'expense' ? 'red' : 'green'}">${acc.type}</span></td>
+                <td>${acc.phone || '-'}</td>
+                <td>${acc.currency_name || 'غير محدد'}</td>
+                <td style="color:${acc.balance >= 0 ? '#22c55e' : '#ef4444'};">
+                    ${acc.balance.toFixed(2)} ${acc.currency_symbol || ''}
+                </td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="openEditAccount(${acc.id})">✏️</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteAccount(${acc.id})">✖</button>
+                </td>
+            </tr>
+        `).join('');
+        updateAccountSelects();
+    }
+
+    window.saveAccount = function() {
+        const name = document.getElementById('acc-name').value.trim();
+        const type = document.getElementById('acc-type').value;
+        const currency_id = document.getElementById('acc-currency').value;
+        const phone = document.getElementById('acc-phone').value.trim();
+        const balance = parseFloat(document.getElementById('acc-balance').value) || 0;
+        if (!name) return alert('أدخل اسم الحساب');
+        if (!currency_id) return alert('اختر العملة');
+        if (run(`INSERT INTO accounts (name, type, currency_id, phone, balance) VALUES (?, ?, ?, ?, ?)`,
+                [name, type, currency_id, phone, balance])) {
+            document.getElementById('acc-name').value = '';
+            document.getElementById('acc-phone').value = '';
+            document.getElementById('acc-balance').value = '0';
+            loadAccounts();
+            alert('✅ تم إضافة الحساب');
+        }
+    };
+
+    window.openEditAccount = function(id) {
+        const acc = query("SELECT * FROM accounts WHERE id = ?", [id])[0];
+        if (!acc) return alert('الحساب غير موجود');
+        document.getElementById('edit-acc-id').value = acc.id;
+        document.getElementById('edit-acc-name').value = acc.name;
+        document.getElementById('edit-acc-type').value = acc.type;
+        document.getElementById('edit-acc-phone').value = acc.phone || '';
+        document.getElementById('edit-acc-balance').value = acc.balance;
+        const currencies = getCurrencies();
+        const sel = document.getElementById('edit-acc-currency');
+        sel.innerHTML = currencies.map(c => `<option value="${c.id}" ${c.id == acc.currency_id ? 'selected' : ''}>${c.name} (${c.symbol})</option>`).join('');
+        switchAccountTab('edit-account');
+    };
+
+    window.updateAccount = function() {
+        const id = document.getElementById('edit-acc-id').value;
+        const name = document.getElementById('edit-acc-name').value.trim();
+        const type = document.getElementById('edit-acc-type').value;
+        const phone = document.getElementById('edit-acc-phone').value.trim();
+        const currency_id = document.getElementById('edit-acc-currency').value;
+        const balance = parseFloat(document.getElementById('edit-acc-balance').value) || 0;
+        if (!name) return alert('أدخل اسم الحساب');
+        if (!currency_id) return alert('اختر العملة');
+        if (run("UPDATE accounts SET name = ?, type = ?, phone = ?, currency_id = ?, balance = ? WHERE id = ?", 
+                [name, type, phone, currency_id, balance, id])) {
+            alert('✅ تم تعديل الحساب بنجاح');
+            switchAccountTab('accounts-list');
+            loadAccounts();
+        }
+    };
+
+    window.deleteAccount = function(id) {
+        if (!confirm('حذف الحساب؟ سيتم حذف جميع الحركات المرتبطة به.')) return;
+        run("DELETE FROM journal_entries WHERE account_id = ?", [id]);
+        if (run("DELETE FROM accounts WHERE id = ?", [id])) {
+            loadAccounts();
+            alert('✅ تم الحذف');
+        }
+    };
+
+    function updateAccountSelects() {
+        const accounts = query("SELECT id, name, type FROM accounts ORDER BY name");
+        const selects = ['entry-account', 'statement-account', 'journal-filter-account', 'expense-account', 'edit-entry-account', 'inv-account', 'edit-inv-account'];
+        selects.forEach(id => {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            const val = sel.value;
+            if (id === 'expense-account') {
+                sel.innerHTML = '<option value="">-- بدون حساب --</option>';
+            } else {
+                sel.innerHTML = '<option value="all">الكل</option>';
+            }
+            accounts.forEach(a => {
+                sel.innerHTML += `<option value="${a.id}">${a.name} (${a.type})</option>`;
+            });
+            if (val) sel.value = val;
+        });
+        updateExpenseAccounts();
+    }
+
+    function updateExpenseAccounts() {
+        const type = document.getElementById('expense-type')?.value || 'expense';
+        const targetType = type === 'expense' ? 'expense' : 'revenue';
+        const accounts = query("SELECT id, name FROM accounts WHERE type = ? ORDER BY name", [targetType]);
+        const sel = document.getElementById('expense-account');
+        if (!sel) return;
+        const val = sel.value;
+        sel.innerHTML = '<option value="">-- بدون حساب --</option>';
+        accounts.forEach(a => {
+            sel.innerHTML += `<option value="${a.id}">${a.name}</option>`;
+        });
+        if (val) sel.value = val;
+    }
+
+    function loadJournal() {
+        const accountId = document.getElementById('journal-filter-account')?.value || 'all';
+        const type = document.getElementById('journal-filter-type')?.value || 'all';
+        let sql = `SELECT j.*, a.name as account_name, c.symbol as currency_symbol
+                   FROM journal_entries j
+                   LEFT JOIN accounts a ON j.account_id = a.id
+                   LEFT JOIN currencies c ON a.currency_id = c.id
+                   WHERE 1=1`;
+        const params = [];
+        if (accountId !== 'all') {
+            sql += ` AND j.account_id = ?`;
+            params.push(accountId);
+        }
+        if (type !== 'all') {
+            sql += ` AND j.entry_type = ?`;
+            params.push(type);
+        }
+        sql += ` ORDER BY j.date DESC, j.id DESC`;
+        const rows = query(sql, params);
+        const tbody = document.getElementById('journal-table-body');
+        if (!tbody) return;
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#94a3b8;">لا توجد حركات</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = rows.map(j => `
+            <tr>
+                <td>${j.date || ''}</td>
+                <td>${j.account_name || 'حذف'}</td>
+                <td>${j.description || ''}</td>
+                <td style="color:${j.debit > 0 ? '#22c55e' : '#94a3b8'};">
+                    ${j.debit ? j.debit.toFixed(2) + ' ' + (j.currency_symbol || '') : '-'}
+                </td>
+                <td style="color:${j.credit > 0 ? '#ef4444' : '#94a3b8'};">
+                    ${j.credit ? j.credit.toFixed(2) + ' ' + (j.currency_symbol || '') : '-'}
+                </td>
+                <td><span class="badge ${j.entry_type === 'receipt' ? 'green' : j.entry_type === 'payment' ? 'red' : j.entry_type === 'expense' ? 'orange' : 'blue'}">${j.entry_type}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    function loadEntryForm() {
+        document.getElementById('entry-date').value = new Date().toISOString().slice(0,10);
+        updateAccountSelects();
+        loadEntriesList();
+    }
+
+    function loadEntriesList() {
+        const account_id = document.getElementById('entry-account')?.value || 'all';
+        let sql = `SELECT j.*, a.name as account_name, c.symbol as currency_symbol
+                   FROM journal_entries j
+                   LEFT JOIN accounts a ON j.account_id = a.id
+                   LEFT JOIN currencies c ON a.currency_id = c.id
+                   WHERE j.entry_type IN ('receipt','payment')`;
+        const params = [];
+        if (account_id !== 'all') {
+            sql += ` AND j.account_id = ?`;
+            params.push(account_id);
+        }
+        sql += ` ORDER BY j.date DESC, j.id DESC LIMIT 50`;
+        const rows = query(sql, params);
+        const container = document.getElementById('entries-list');
+        if (!container) return;
+        if (rows.length === 0) {
+            container.innerHTML = '<p style="color:#94a3b8;">لا توجد سندات مسجلة لهذا الحساب.</p>';
+            return;
+        }
+        container.innerHTML = rows.map(j => {
+            const amount = j.debit || j.credit || 0;
+            const typeLabel = j.entry_type === 'receipt' ? 'قبض' : 'دفع';
+            const typeClass = j.entry_type === 'receipt' ? 'green' : 'red';
+            return `
+                <div class="entry-item">
+                    <div>
+                        <span class="badge ${typeClass}">${typeLabel}</span>
+                        <strong>${j.account_name || 'حذف'}</strong>
+                        - ${amount.toFixed(2)} ${j.currency_symbol || ''}
+                        <span style="color:#64748b;font-size:14px;">${j.date} - ${j.description || ''}</span>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-warning btn-sm" onclick="openEditEntry(${j.id})">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteEntry(${j.id})">✖</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.saveEntry = function() {
+        const type = document.getElementById('entry-type').value;
+        const account_id = document.getElementById('entry-account').value;
+        const amount = parseFloat(document.getElementById('entry-amount').value);
+        const date = document.getElementById('entry-date').value;
+        const desc = document.getElementById('entry-desc').value.trim();
+        if (!account_id || account_id === 'all') return alert('اختر حساباً');
+        if (!amount || amount <= 0) return alert('أدخل مبلغاً صحيحاً');
+        if (!date) return alert('أدخل التاريخ');
+
+        const acc = query("SELECT * FROM accounts WHERE id = ?", [account_id])[0];
+        if (!acc) return alert('الحساب غير موجود');
+
+        let debit = 0, credit = 0;
+        let balanceChange = 0;
+
+        if (acc.type === 'customer') {
+            if (type === 'receipt') { debit = amount; balanceChange = amount; }
+            else { credit = amount; balanceChange = -amount; }
+        } else if (acc.type === 'supplier') {
+            if (type === 'receipt') { credit = amount; balanceChange = -amount; }
+            else { debit = amount; balanceChange = amount; }
+        } else {
+            if (type === 'receipt') { debit = amount; balanceChange = amount; }
+            else { credit = amount; balanceChange = -amount; }
+        }
+
+        const newBalance = acc.balance + balanceChange;
+
+        db.run("BEGIN TRANSACTION");
+        try {
+            db.run(`INSERT INTO journal_entries (account_id, date, description, debit, credit, entry_type, reference)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [account_id, date, desc, debit, credit, type, '']);
+            db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, account_id]);
+            db.run("COMMIT");
+            saveDB();
+            document.getElementById('entry-amount').value = '';
+            document.getElementById('entry-desc').value = '';
+            loadJournal();
+            loadEntriesList();
+            loadAccounts();
+            alert('✅ تم تسجيل السند بنجاح');
+        } catch(e) {
+            db.run("ROLLBACK");
+            alert('خطأ: ' + e.message);
+        }
+    };
+
+    window.openEditEntry = function(id) {
+        const entry = query("SELECT * FROM journal_entries WHERE id = ?", [id])[0];
+        if (!entry) return alert('السند غير موجود');
+        document.getElementById('edit-entry-id').value = entry.id;
+        document.getElementById('edit-entry-type').value = entry.entry_type;
+        document.getElementById('edit-entry-amount').value = entry.debit || entry.credit || 0;
+        document.getElementById('edit-entry-date').value = entry.date || '';
+        document.getElementById('edit-entry-desc').value = entry.description || '';
+        const accounts = query("SELECT id, name, type FROM accounts ORDER BY name");
+        const sel = document.getElementById('edit-entry-account');
+        sel.innerHTML = accounts.map(a => `<option value="${a.id}" ${a.id == entry.account_id ? 'selected' : ''}>${a.name} (${a.type})</option>`).join('');
+        switchAccountTab('edit-entry');
+    };
+
+    window.updateEntry = function() {
+        const id = document.getElementById('edit-entry-id').value;
+        const type = document.getElementById('edit-entry-type').value;
+        const account_id = document.getElementById('edit-entry-account').value;
+        const amount = parseFloat(document.getElementById('edit-entry-amount').value);
+        const date = document.getElementById('edit-entry-date').value;
+        const desc = document.getElementById('edit-entry-desc').value.trim();
+        if (!account_id) return alert('اختر حساباً');
+        if (!amount || amount <= 0) return alert('أدخل مبلغاً صحيحاً');
+        if (!date) return alert('أدخل التاريخ');
+
+        const oldEntry = query("SELECT * FROM journal_entries WHERE id = ?", [id])[0];
+        if (!oldEntry) return alert('السند غير موجود');
+        const acc = query("SELECT * FROM accounts WHERE id = ?", [account_id])[0];
+        if (!acc) return alert('الحساب غير موجود');
+
+        let oldDebit = oldEntry.debit || 0;
+        let oldCredit = oldEntry.credit || 0;
+        let oldBalanceChange = 0;
+        
+        if (acc.type === 'customer') {
+            oldBalanceChange = oldEntry.entry_type === 'receipt' ? oldDebit : -oldCredit;
+        } else if (acc.type === 'supplier') {
+            oldBalanceChange = oldEntry.entry_type === 'receipt' ? -oldCredit : oldDebit;
+        } else {
+            oldBalanceChange = oldEntry.entry_type === 'receipt' ? oldDebit : -oldCredit;
+        }
+
+        let newDebit = type === 'receipt' ? amount : 0;
+        let newCredit = type === 'payment' ? amount : 0;
+        let newBalanceChange = 0;
+        
+        if (acc.type === 'customer') {
+            newBalanceChange = type === 'receipt' ? amount : -amount;
+        } else if (acc.type === 'supplier') {
+            newBalanceChange = type === 'receipt' ? -amount : amount;
+        } else {
+            newBalanceChange = type === 'receipt' ? amount : -amount;
+        }
+
+        const diff = newBalanceChange - oldBalanceChange;
+        const newBalance = acc.balance + diff;
+
+        db.run("BEGIN TRANSACTION");
+        try {
+            db.run(`UPDATE journal_entries SET account_id = ?, date = ?, description = ?, debit = ?, credit = ?, entry_type = ? WHERE id = ?`,
+                    [account_id, date, desc, newDebit, newCredit, type, id]);
+            db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, account_id]);
+            db.run("COMMIT");
+            saveDB();
+            alert('✅ تم تعديل السند بنجاح');
+            switchAccountTab('entry');
+            loadJournal();
+            loadEntriesList();
+            loadAccounts();
+        } catch(e) {
+            db.run("ROLLBACK");
+            alert('خطأ: ' + e.message);
+        }
+    };
+
+    window.deleteEntry = function(id) {
+        if (!confirm('حذف السند؟ سيتم استرجاع الرصيد.')) return;
+        const entry = query("SELECT * FROM journal_entries WHERE id = ?", [id])[0];
+        if (!entry) return alert('السند غير موجود');
+        const acc = query("SELECT * FROM accounts WHERE id = ?", [entry.account_id])[0];
+        if (!acc) return alert('الحساب غير موجود');
+
+        let oldAmount = entry.debit || entry.credit || 0;
+        let balanceChange = 0;
+        
+        if (acc.type === 'customer') {
+            balanceChange = entry.debit ? oldAmount : -oldAmount;
+        } else if (acc.type === 'supplier') {
+            balanceChange = entry.debit ? -oldAmount : oldAmount;
+        } else {
+            balanceChange = entry.debit ? oldAmount : -oldAmount;
+        }
+
+        const newBalance = acc.balance - balanceChange;
+
+        db.run("BEGIN TRANSACTION");
+        try {
+            db.run("DELETE FROM journal_entries WHERE id = ?", [id]);
+            db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, acc.id]);
+            db.run("COMMIT");
+            saveDB();
+            loadJournal();
+            loadEntriesList();
+            loadAccounts();
+            alert('✅ تم حذف السند واسترجاع الرصيد');
+        } catch(e) {
+            db.run("ROLLBACK");
+            alert('خطأ: ' + e.message);
+        }
+    };
+
+    function loadExpenseForm() {
+        document.getElementById('expense-date').value = new Date().toISOString().slice(0,10);
+        updateExpenseAccounts();
+        loadExpenseEntries();
+    }
+
+    function loadExpenseEntries() {
+        const account_id = document.getElementById('expense-account')?.value || '';
+        if (!account_id || account_id === '') {
+            document.getElementById('expense-entries-list').innerHTML = '<p style="color:#94a3b8;">اختر حساباً لعرض سنداته.</p>';
+            return;
+        }
+        const rows = query(`SELECT j.*, a.name as account_name, c.symbol as currency_symbol
+                           FROM journal_entries j
+                           LEFT JOIN accounts a ON j.account_id = a.id
+                           LEFT JOIN currencies c ON a.currency_id = c.id
+                           WHERE j.account_id = ? AND j.entry_type IN ('expense','revenue')
+                           ORDER BY j.date DESC, j.id DESC LIMIT 50`, [account_id]);
+        const container = document.getElementById('expense-entries-list');
+        if (!container) return;
+        if (rows.length === 0) {
+            container.innerHTML = '<p style="color:#94a3b8;">لا توجد سندات لهذا الحساب.</p>';
+            return;
+        }
+        container.innerHTML = rows.map(j => {
+            const amount = j.debit || j.credit || 0;
+            const typeLabel = j.entry_type === 'expense' ? 'مصروف' : 'إيراد';
+            const typeClass = j.entry_type === 'expense' ? 'red' : 'green';
+            return `
+                <div class="entry-item">
+                    <div>
+                        <span class="badge ${typeClass}">${typeLabel}</span>
+                        <strong>${j.account_name || 'حذف'}</strong>
+                        - ${amount.toFixed(2)} ${j.currency_symbol || ''}
+                        <span style="color:#64748b;font-size:14px;">${j.date} - ${j.description || ''}</span>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-warning btn-sm" onclick="openEditEntry(${j.id})">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteEntry(${j.id})">✖</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.saveExpense = function() {
+        const type = document.getElementById('expense-type').value;
+        const account_id = document.getElementById('expense-account').value;
+        const amount = parseFloat(document.getElementById('expense-amount').value);
+        const date = document.getElementById('expense-date').value;
+        const desc = document.getElementById('expense-desc').value.trim();
+        if (!amount || amount <= 0) return alert('أدخل مبلغاً صحيحاً');
+        if (!date) return alert('أدخل التاريخ');
+
+        const debit = type === 'expense' ? amount : 0;
+        const credit = type === 'revenue' ? amount : 0;
+
+        let acc = null;
+        let balanceChange = 0;
+        if (account_id && account_id !== '') {
+            acc = query("SELECT * FROM accounts WHERE id = ?", [account_id])[0];
+            if (acc) {
+                balanceChange = type === 'expense' ? -amount : amount;
+            }
+        }
+
+        db.run("BEGIN TRANSACTION");
+        try {
+            db.run(`INSERT INTO journal_entries (account_id, date, description, debit, credit, entry_type, reference)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [account_id && account_id !== '' ? account_id : null, date, desc, debit, credit, type, '']);
+            if (acc) {
+                const newBalance = acc.balance + balanceChange;
+                db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, acc.id]);
+            }
+            db.run("COMMIT");
+            saveDB();
+            document.getElementById('expense-amount').value = '';
+            document.getElementById('expense-desc').value = '';
+            loadJournal();
+            loadAccounts();
+            loadExpenseEntries();
+            alert('✅ تم تسجيل المصروف/الإيراد بنجاح');
+        } catch(e) {
+            db.run("ROLLBACK");
+            alert('خطأ: ' + e.message);
+        }
+    };
+
+    function loadStatementForm() {
+        updateAccountSelects();
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        document.getElementById('statement-from').value = firstDay.toISOString().slice(0,10);
+        document.getElementById('statement-to').value = now.toISOString().slice(0,10);
+        loadStatement();
+    }
+
+    window.loadStatement = function() {
+        const account_id = document.getElementById('statement-account').value;
+        if (!account_id || account_id === 'all') {
+            document.getElementById('statement-result').innerHTML = '<p style="color:#94a3b8;">اختر حساباً لعرض كشف الحساب.</p>';
+            return;
+        }
+        const from = document.getElementById('statement-from').value;
+        const to = document.getElementById('statement-to').value;
+        let sql = `SELECT j.*, a.name as account_name, c.name as currency_name, c.symbol as currency_symbol
+                   FROM journal_entries j
+                   LEFT JOIN accounts a ON j.account_id = a.id
+                   LEFT JOIN currencies c ON a.currency_id = c.id
+                   WHERE j.account_id = ?`;
+        const params = [account_id];
+        if (from) { sql += ` AND j.date >= ?`; params.push(from); }
+        if (to) { sql += ` AND j.date <= ?`; params.push(to); }
+        sql += ` ORDER BY j.date ASC`;
+        const rows = query(sql, params);
+        const acc = query(`SELECT a.*, c.name as currency_name, c.symbol as currency_symbol 
+                           FROM accounts a 
+                           LEFT JOIN currencies c ON a.currency_id = c.id 
+                           WHERE a.id = ?`, [account_id])[0];
+        const container = document.getElementById('statement-result');
+        if (!container) return;
+        if (rows.length === 0) {
+            container.innerHTML = `<p style="color:#94a3b8;">لا توجد حركات لهذا الحساب في الفترة المحددة.</p>`;
+            return;
+        }
+        let runningBalance = 0;
+        let totalDebit = 0;
+        let totalCredit = 0;
+        let html = `
+            <div style="font-weight:700;margin-bottom:10px;font-size:18px;background:#f8fafc;padding:12px;border-radius:8px;">
+                📄 كشف حساب: <strong>${acc ? acc.name : ''}</strong> 
+                <span style="color:#64748b;font-size:16px;margin-right:15px;">
+                    (الرصيد الحالي: ${acc ? acc.balance.toFixed(2) : 0} ${acc ? acc.currency_symbol || '' : ''})
+                </span>
+                <div style="margin-top:5px;">
+                    <button class="btn btn-print btn-sm" onclick="printStatement(${account_id})">🖨️ طباعة</button>
+                    <button class="btn btn-share btn-sm" onclick="shareStatement(${account_id})">📤 مشاركة</button>
+                </div>
+            </div>
+            <div class="table-wrap">
+            <table>
+                <thead><tr><th>التاريخ</th><th>الوصف</th><th>مدين</th><th>دائن</th><th>الرصيد التراكمي</th></tr></thead>
+                <tbody>
+        `;
+        rows.forEach(j => {
+            const debit = j.debit || 0;
+            const credit = j.credit || 0;
+            runningBalance = runningBalance + debit - credit;
+            totalDebit += debit;
+            totalCredit += credit;
+            let typeLabel = '';
+            if (j.entry_type === 'receipt') typeLabel = 'قبض';
+            else if (j.entry_type === 'payment') typeLabel = 'دفع';
+            else if (j.entry_type === 'expense') typeLabel = 'مصروف';
+            else if (j.entry_type === 'revenue') typeLabel = 'إيراد';
+            html += `<tr>
+                <td>${j.date || ''}</td>
+                <td>${j.description || ''} <span style="color:#94a3b8;font-size:12px;margin-right:8px;">[${typeLabel}]</span></td>
+                <td style="color:${debit > 0 ? '#22c55e' : '#94a3b8'};">
+                    ${debit > 0 ? debit.toFixed(2) + ' ' + (acc ? acc.currency_symbol || '' : '') : '-'}
+                </td>
+                <td style="color:${credit > 0 ? '#ef4444' : '#94a3b8'};">
+                    ${credit > 0 ? credit.toFixed(2) + ' ' + (acc ? acc.currency_symbol || '' : '') : '-'}
+                </td>
+                <td style="font-weight:bold;color:${runningBalance >= 0 ? '#22c55e' : '#ef4444'};">
+                    ${runningBalance.toFixed(2)} ${acc ? acc.currency_symbol || '' : ''}
+                </td>
+            </tr>`;
+        });
+        html += `
+                </tbody>
+                <tfoot>
+                    <tr style="background:#f1f5f9;font-weight:bold;">
+                        <td colspan="2" style="text-align:left;">إجمالي الحركات</td>
+                        <td style="color:#22c55e;">${totalDebit.toFixed(2)} ${acc ? acc.currency_symbol || '' : ''}</td>
+                        <td style="color:#ef4444;">${totalCredit.toFixed(2)} ${acc ? acc.currency_symbol || '' : ''}</td>
+                        <td style="color:${runningBalance >= 0 ? '#22c55e' : '#ef4444'};">
+                            ${runningBalance.toFixed(2)} ${acc ? acc.currency_symbol || '' : ''}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table></div>
+            <div style="margin-top:15px;padding:12px;background:#f8fafc;border-radius:8px;font-size:14px;color:#64748b;">
+                <div>📌 ملخص الحركات:</div>
+                <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:5px;">
+                    <div>المدين (زيادة الرصيد): <span style="color:#22c55e;font-weight:bold;">
+                        ${totalDebit.toFixed(2)} ${acc ? acc.currency_symbol || '' : ''}
+                    </span></div>
+                    <div>الدائن (نقصان الرصيد): <span style="color:#ef4444;font-weight:bold;">
+                        ${totalCredit.toFixed(2)} ${acc ? acc.currency_symbol || '' : ''}
+                    </span></div>
+                    <div>صافي الحركات: <span style="font-weight:bold;color:${runningBalance >= 0 ? '#22c55e' : '#ef4444'};">
+                        ${runningBalance.toFixed(2)} ${acc ? acc.currency_symbol || '' : ''}
+                    </span></div>
+                </div>
+            </div>
+        `;
+        container.innerHTML = html;
+    };
+
+    // طباعة ومشاركة كشف الحساب
+    window.printStatement = function(accountId) {
+        const acc = query("SELECT * FROM accounts WHERE id = ?", [accountId])[0];
+        if (!acc) return alert('الحساب غير موجود');
+        const container = document.getElementById('statement-result');
+        const content = container.innerHTML;
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>كشف حساب - ${acc.name}</title>
+                <style>
+                    body { font-family: system-ui, sans-serif; padding: 40px; direction: rtl; }
+                    .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
+                    .header h1 { font-size: 24px; margin: 0; }
+                    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                    th, td { padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; }
+                    th { background: #f8fafc; font-weight: 700; }
+                    .footer { text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 20px; font-size: 12px; color: #64748b; }
+                    @media print { body { padding: 20px; } }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>كشف حساب</h1>
+                    <div style="color:#64748b;">${acc.name}</div>
+                </div>
+                ${content}
+                <div class="footer">تم إنشاؤه بواسطة النظام المتكامل</div>
+                <script>setTimeout(() => { window.print(); }, 500);<\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    };
+
+    window.shareStatement = function(accountId) {
+        const acc = query("SELECT * FROM accounts WHERE id = ?", [accountId])[0];
+        if (!acc) return alert('الحساب غير موجود');
+        const container = document.getElementById('statement-result');
+        const content = container.innerHTML;
+        
+        const element = document.createElement('div');
+        element.innerHTML = `
+            <div style="padding:20px;font-family:system-ui;direction:rtl;">
+                <div style="text-align:center;border-bottom:2px solid #0f172a;padding-bottom:15px;margin-bottom:20px;">
+                    <h2>كشف حساب</h2>
+                    <div style="color:#64748b;">${acc.name}</div>
+                </div>
+                ${content}
+                <div style="text-align:center;border-top:1px solid #e2e8f0;padding-top:15px;margin-top:20px;font-size:12px;color:#64748b;">
+                    تم إنشاؤه بواسطة النظام المتكامل
+                </div>
+            </div>
+        `;
+        
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: `كشف_حساب_${acc.name}_${new Date().toISOString().slice(0,10)}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        
+        html2pdf().set(opt).from(element).save()
+            .then(() => {
+                if (navigator.share) {
+                    navigator.share({
+                        title: `كشف حساب ${acc.name}`,
+                        text: `كشف حساب ${acc.name}`,
+                        url: window.location.href
+                    }).catch(() => {});
+                }
+            })
+            .catch(err => {
+                alert('حدث خطأ أثناء إنشاء PDF: ' + err.message);
+            });
+    };
+
+    // دوال المخزون (مختصرة)
+    window.switchInventoryTab = function(tabId) {
+        document.querySelectorAll('#inventoryTabs .tab-btn').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#inventoryTabs .tab-btn[onclick*="${tabId}"]`)?.classList.add('active');
+        document.querySelectorAll('#page-inventory .tab-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById('panel-' + tabId);
+        if (panel) panel.classList.add('active');
+        switch(tabId) {
+            case 'add-material': loadAddMaterialForm(); break;
+            case 'materials-list': loadMaterials(); break;
+            case 'edit-material': break;
+            case 'inventory-count': loadInventoryCountForm(); break;
+            case 'barcode-designer': break;
+        }
+    };
+
+    function loadAllInventoryData() {
+        loadAddMaterialForm();
+        loadMaterials();
+        loadInventoryCountForm();
+    }
+
+    function loadAddMaterialForm() {
+        const cats = query("SELECT * FROM categories ORDER BY name");
+        const catSel = document.getElementById('mat-category');
+        if (catSel) {
+            const val = catSel.value;
+            catSel.innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            if (val) catSel.value = val;
+        }
+        const units = query("SELECT * FROM units ORDER BY name");
+        const unitSel = document.getElementById('mat-unit');
+        if (unitSel) {
+            const val = unitSel.value;
+            unitSel.innerHTML = units.map(u => `<option value="${u.id}">${u.name} (${u.abbreviation})</option>`).join('');
+            if (val) unitSel.value = val;
+        }
+        const currencies = query("SELECT * FROM currencies ORDER BY name");
+        ['mat-cost-currency', 'mat-sell-currency'].forEach(id => {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            const val = sel.value;
+            sel.innerHTML = currencies.map(c => `<option value="${c.id}">${c.name} (${c.symbol})</option>`).join('');
+            if (val) sel.value = val;
+        });
+        const defaultCur = query("SELECT id FROM currencies WHERE is_default = 1")[0];
+        if (defaultCur) {
+            ['mat-cost-currency', 'mat-sell-currency'].forEach(id => {
+                const sel = document.getElementById(id);
+                if (sel && !sel.value) sel.value = defaultCur.id;
+            });
+        }
+        generateBarcodeNumber();
+    }
+
+    window.generateBarcodeNumber = function() {
+        const code = 'BRC-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 4).toUpperCase();
+        document.getElementById('mat-barcode').value = code;
+        previewBarcode();
+    };
+
+    window.previewBarcode = function() {
+        const code = document.getElementById('mat-barcode').value;
+        const container = document.getElementById('barcode-preview');
+        if (!code) { container.style.display = 'none'; return; }
+        container.style.display = 'flex';
+        try {
+            JsBarcode("#barcode-svg", code, { format: "CODE128", width: 2, height: 80, displayValue: true, fontSize: 18, margin: 10 });
+            document.getElementById('barcode-label').textContent = code;
+        } catch(e) { container.innerHTML = '<p style="color:red;">خطأ في توليد الباركود</p>'; }
+    };
+
+    document.getElementById('mat-barcode')?.addEventListener('input', previewBarcode);
+
+    window.saveMaterial = function() {
+        const name = document.getElementById('mat-name').value.trim();
+        const category_id = document.getElementById('mat-category').value;
+        const unit_id = document.getElementById('mat-unit').value;
+        const cost_price = parseFloat(document.getElementById('mat-cost').value) || 0;
+        const cost_currency_id = document.getElementById('mat-cost-currency').value;
+        const sell_price = parseFloat(document.getElementById('mat-sell').value) || 0;
+        const sell_currency_id = document.getElementById('mat-sell-currency').value;
+        const quantity = parseFloat(document.getElementById('mat-qty').value) || 0;
+        const min_quantity = parseFloat(document.getElementById('mat-min-qty').value) || 5;
+        const barcode = document.getElementById('mat-barcode').value.trim();
+        const notes = document.getElementById('mat-notes').value.trim();
+        if (!name) return alert('أدخل اسم المادة');
+        if (!category_id) return alert('اختر الصنف');
+        if (!unit_id) return alert('اختر الوحدة');
+        if (!barcode) return alert('أدخل رمز الباركود أو اضغط توليد');
+        const sql = `INSERT INTO materials (name, category_id, unit_id, cost_price, cost_currency_id, sell_price, sell_currency_id, quantity, min_quantity, barcode, notes)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        if (run(sql, [name, category_id, unit_id, cost_price, cost_currency_id, sell_price, sell_currency_id, quantity, min_quantity, barcode, notes])) {
+            document.getElementById('mat-name').value = '';
+            document.getElementById('mat-cost').value = '';
+            document.getElementById('mat-sell').value = '';
+            document.getElementById('mat-qty').value = '0';
+            document.getElementById('mat-notes').value = '';
+            document.getElementById('barcode-preview').style.display = 'none';
+            generateBarcodeNumber();
+            loadMaterials();
+            alert('✅ تم إضافة المادة بنجاح');
+        }
+    };
+
+    function loadMaterials() {
+        const search = document.getElementById('search-material')?.value.toLowerCase() || '';
+        let sql = `SELECT m.*, c.name as category_name, u.name as unit_name, u.abbreviation as unit_abbr,
+                   cc.name as cost_currency_name, cc.symbol as cost_currency_symbol,
+                   sc.name as sell_currency_name, sc.symbol as sell_currency_symbol
+                   FROM materials m
+                   LEFT JOIN categories c ON m.category_id = c.id
+                   LEFT JOIN units u ON m.unit_id = u.id
+                   LEFT JOIN currencies cc ON m.cost_currency_id = cc.id
+                   LEFT JOIN currencies sc ON m.sell_currency_id = sc.id
+                   WHERE 1=1`;
+        const params = [];
+        if (search) { sql += ` AND LOWER(m.name) LIKE ?`; params.push(`%${search}%`); }
+        sql += ` ORDER BY m.name ASC`;
+        const rows = query(sql, params);
+        const tbody = document.getElementById('materials-table-body');
+        if (!tbody) return;
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#94a3b8;">لا توجد مواد</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = rows.map((m, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td><strong>${m.name}</strong></td>
+                <td>${m.category_name || '-'}</td>
+                <td>${m.unit_name || '-'}</td>
+                <td>${m.cost_price} ${m.cost_currency_symbol || ''}</td>
+                <td>${m.sell_price} ${m.sell_currency_symbol || ''}</td>
+                <td><span class="badge ${m.quantity > m.min_quantity ? 'green' : 'red'}">${m.quantity}</span></td>
+                <td><span style="font-size:11px;">${m.barcode || '-'}</span></td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="openEditMaterial(${m.id})">✏️</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteMaterial(${m.id})">✖</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    window.openEditMaterial = function(id) {
+        const mat = query("SELECT * FROM materials WHERE id = ?", [id])[0];
+        if (!mat) return alert('المادة غير موجودة');
+        document.getElementById('edit-mat-id').value = mat.id;
+        document.getElementById('edit-mat-name').value = mat.name;
+        document.getElementById('edit-mat-cost').value = mat.cost_price;
+        document.getElementById('edit-mat-sell').value = mat.sell_price;
+        document.getElementById('edit-mat-qty').value = mat.quantity;
+        document.getElementById('edit-mat-min-qty').value = mat.min_quantity || 5;
+        document.getElementById('edit-mat-barcode').value = mat.barcode || '';
+        document.getElementById('edit-mat-notes').value = mat.notes || '';
+        const cats = query("SELECT * FROM categories ORDER BY name");
+        const catSel = document.getElementById('edit-mat-category');
+        catSel.innerHTML = cats.map(c => `<option value="${c.id}" ${c.id == mat.category_id ? 'selected' : ''}>${c.name}</option>`).join('');
+        const units = query("SELECT * FROM units ORDER BY name");
+        const unitSel = document.getElementById('edit-mat-unit');
+        unitSel.innerHTML = units.map(u => `<option value="${u.id}" ${u.id == mat.unit_id ? 'selected' : ''}>${u.name} (${u.abbreviation})</option>`).join('');
+        const currencies = query("SELECT * FROM currencies ORDER BY name");
+        const costSel = document.getElementById('edit-mat-cost-currency');
+        costSel.innerHTML = currencies.map(c => `<option value="${c.id}" ${c.id == mat.cost_currency_id ? 'selected' : ''}>${c.name} (${c.symbol})</option>`).join('');
+        const sellSel = document.getElementById('edit-mat-sell-currency');
+        sellSel.innerHTML = currencies.map(c => `<option value="${c.id}" ${c.id == mat.sell_currency_id ? 'selected' : ''}>${c.name} (${c.symbol})</option>`).join('');
+        switchInventoryTab('edit-material');
+    };
+
+    window.updateMaterial = function() {
+        const id = document.getElementById('edit-mat-id').value;
+        const name = document.getElementById('edit-mat-name').value.trim();
+        const category_id = document.getElementById('edit-mat-category').value;
+        const unit_id = document.getElementById('edit-mat-unit').value;
+        const cost_price = parseFloat(document.getElementById('edit-mat-cost').value) || 0;
+        const cost_currency_id = document.getElementById('edit-mat-cost-currency').value;
+        const sell_price = parseFloat(document.getElementById('edit-mat-sell').value) || 0;
+        const sell_currency_id = document.getElementById('edit-mat-sell-currency').value;
+        const quantity = parseFloat(document.getElementById('edit-mat-qty').value) || 0;
+        const min_quantity = parseFloat(document.getElementById('edit-mat-min-qty').value) || 5;
+        const barcode = document.getElementById('edit-mat-barcode').value.trim();
+        const notes = document.getElementById('edit-mat-notes').value.trim();
+        if (!name) return alert('أدخل اسم المادة');
+        if (!category_id) return alert('اختر الصنف');
+        if (!unit_id) return alert('اختر الوحدة');
+        const sql = `UPDATE materials SET name=?, category_id=?, unit_id=?, cost_price=?, cost_currency_id=?, 
+                     sell_price=?, sell_currency_id=?, quantity=?, min_quantity=?, barcode=?, notes=? WHERE id=?`;
+        if (run(sql, [name, category_id, unit_id, cost_price, cost_currency_id, sell_price, sell_currency_id, quantity, min_quantity, barcode, notes, id])) {
+            alert('✅ تم تحديث المادة بنجاح');
+            switchInventoryTab('materials-list');
+            loadMaterials();
+        }
+    };
+
+    window.deleteMaterial = function(id) {
+        if (!confirm('حذف المادة؟')) return;
+        if (run("DELETE FROM materials WHERE id = ?", [id])) {
+            loadMaterials();
+            alert('✅ تم الحذف');
+        }
+    };
+
+    function loadInventoryCountForm() {
+        const customers = query("SELECT id, name FROM accounts WHERE type = 'customer' ORDER BY name");
+        const sel = document.getElementById('count-customer');
+        if (sel) {
+            sel.innerHTML = '<option value="all">الكل</option>';
+            customers.forEach(c => { sel.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
+        }
+        document.getElementById('count-date').value = new Date().toISOString().slice(0,10);
+        loadInventoryCount();
+    }
+
+    window.loadInventoryCount = function() {
+        const customer_id = document.getElementById('count-customer').value || 'all';
+        const search = document.getElementById('count-material-search')?.value.toLowerCase() || '';
+        const date = document.getElementById('count-date').value;
+        if (!date) return alert('اختر التاريخ');
+        let sql = "SELECT * FROM materials WHERE 1=1";
+        const params = [];
+        if (search) { sql += ` AND LOWER(name) LIKE ?`; params.push(`%${search}%`); }
+        sql += ` ORDER BY name ASC`;
+        const materials = query(sql, params);
+        const container = document.getElementById('count-result');
+        if (materials.length === 0) {
+            container.innerHTML = '<p style="color:#94a3b8;">لا توجد مواد مطابقة للبحث.</p>';
+            return;
+        }
+        let html = `
+            <div style="overflow-x:auto;">
+            <p style="color:#64748b;margin-bottom:10px;">
+                ${customer_id !== 'all' ? 'جرد لزبون: ' + (query("SELECT name FROM accounts WHERE id = ?", [customer_id])[0]?.name || '') : 'جرد لجميع الزبائن'}
+                - التاريخ: ${date}
+            </p>
+            <table>
+                <thead><tr><th>#</th><th>المادة</th><th>الوحدة</th><th>الكمية في النظام</th><th>الكمية الفعلية</th><th>الفرق</th></tr></thead>
+                <tbody>
+        `;
+        materials.forEach((m, i) => {
+            html += `
+                <tr>
+                    <td>${i+1}</td>
+                    <td><strong>${m.name}</strong></td>
+                    <td>${m.unit_id || '-'}</td>
+                    <td>${m.quantity}</td>
+                    <td><input type="number" step="0.01" id="count-${m.id}" value="${m.quantity}" style="width:100px;padding:6px;border:1px solid #e2e8f0;border-radius:6px;" onchange="calculateDiff(${m.id})"></td>
+                    <td id="diff-${m.id}" style="font-weight:bold;">0</td>
+                </tr>
+            `;
+        });
+        html += `
+                </tbody>
+            </table>
+            <button class="btn btn-success" onclick="saveInventoryCount()" style="margin-top:15px;">💾 حفظ الجرد</button>
+            <button class="btn btn-primary" onclick="calculateDifferences()" style="margin-top:15px;margin-right:10px;">📊 حساب الفروقات</button>
+            </div>
+        `;
+        container.innerHTML = html;
+    };
+
+    window.calculateDiff = function(id) {
+        const input = document.getElementById(`count-${id}`);
+        if (!input) return;
+        const mat = query("SELECT quantity FROM materials WHERE id = ?", [id])[0];
+        if (!mat) return;
+        const counted = parseFloat(input.value) || 0;
+        const diff = counted - mat.quantity;
+        const el = document.getElementById(`diff-${id}`);
+        if (el) {
+            el.textContent = diff.toFixed(2);
+            el.style.color = Math.abs(diff) < 0.001 ? '#22c55e' : diff > 0 ? '#22c55e' : '#ef4444';
+        }
+    };
+
+    window.calculateDifferences = function() {
+        const materials = query("SELECT * FROM materials ORDER BY name");
+        materials.forEach(m => calculateDiff(m.id));
+    };
+
+    window.saveInventoryCount = function() {
+        const customer_id = document.getElementById('count-customer').value || 'all';
+        const date = document.getElementById('count-date').value;
+        if (!date) return alert('اختر التاريخ');
+        const materials = query("SELECT * FROM materials ORDER BY name");
+        let hasChanges = false;
+        let countData = [];
+        materials.forEach(m => {
+            const input = document.getElementById(`count-${m.id}`);
+            if (input) {
+                const counted = parseFloat(input.value) || 0;
+                const diff = counted - m.quantity;
+                if (Math.abs(diff) > 0.001) {
+                    hasChanges = true;
+                    countData.push({ material_id: m.id, counted: counted, system: m.quantity, diff: diff });
+                }
+            }
+        });
+        if (!hasChanges) return alert('لا توجد فروقات في الجرد.');
+        if (!confirm(`سيتم تسجيل ${countData.length} فروقات. هل أنت متأكد؟`)) return;
+        db.run("BEGIN TRANSACTION");
+        try {
+            countData.forEach(item => {
+                const custId = customer_id === 'all' ? null : parseInt(customer_id);
+                db.run(`INSERT INTO inventory_counts (material_id, customer_id, date, counted_quantity, system_quantity, difference, notes)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [item.material_id, custId, date, item.counted, item.system, item.diff, '']);
+                db.run(`UPDATE materials SET quantity = ? WHERE id = ?`, [item.counted, item.material_id]);
+            });
+            db.run("COMMIT");
+            saveDB();
+            alert('✅ تم حفظ الجرد وتحديث المخزون');
+            loadInventoryCount();
+            loadMaterials();
+        } catch(e) {
+            db.run("ROLLBACK");
+            alert('خطأ: ' + e.message);
+        }
+    };
+
+    // مصمم الباركود
+    window.designBarcode = function() {
+        const text = document.getElementById('design-barcode-text').value.trim();
+        const fontSize = document.getElementById('design-font-size').value;
+        const height = document.getElementById('design-height').value;
+        const width = document.getElementById('design-width').value;
+        if (!text) return alert('أدخل نص الباركود');
+        const container = document.getElementById('design-barcode-preview');
+        container.innerHTML = `<div class="barcode-item"><svg id="design-barcode-svg"></svg><div style="margin-top:8px;font-weight:bold;font-size:${fontSize}px;">${text}</div></div>`;
+        try {
+            JsBarcode("#design-barcode-svg", text, { format: "CODE128", width: parseFloat(width), height: parseInt(height), displayValue: true, fontSize: parseInt(fontSize), margin: 12 });
+        } catch(e) { container.innerHTML = '<p style="color:red;">خطأ في توليد الباركود</p>'; }
+    };
+
+    window.printDesignBarcode = function() {
+        const container = document.getElementById('design-barcode-preview');
+        const content = container.innerHTML;
+        if (!content || content.includes('أدخل النص')) return alert('قم بتوليد الباركود أولاً');
+        const win = window.open('', '_blank', 'width=500,height=500');
+        win.document.write(`
+            <html><head><title>طباعة الباركود</title>
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+            <style>body{display:flex;justify-content:center;align-items:center;height:100vh;background:#fff;margin:0;}.barcode-item{text-align:center;padding:30px;}</style>
+            </head><body>
+            <div class="barcode-item">${content}</div>
+            <script>
+                setTimeout(() => {
+                    const text = "${document.getElementById('design-barcode-text').value}";
+                    const fontSize = ${document.getElementById('design-font-size').value};
+                    const height = ${document.getElementById('design-height').value};
+                    const width = ${document.getElementById('design-width').value};
+                    JsBarcode("#design-barcode-svg", text, { format:"CODE128", width:parseFloat(width), height:parseInt(height), displayValue:true, fontSize:parseInt(fontSize) });
+                    window.print();
+                }, 600);
+            <\/script>
+            </body></html>
+        `);
+        win.document.close();
+    };
+
+    window.downloadDesignBarcode = function() {
+        const svg = document.getElementById('design-barcode-svg');
+        if (!svg) return alert('قم بتوليد الباركود أولاً');
+        const serializer = new XMLSerializer();
+        const svgStr = serializer.serializeToString(svg);
+        const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `barcode_${Date.now()}.svg`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    window.printBarcode = function() {
+        const code = document.getElementById('mat-barcode').value;
+        const name = document.getElementById('mat-name').value || 'مادة';
+        if (!code) return alert('لا يوجد باركود للطباعة');
+        const win = window.open('', '_blank', 'width=400,height=400');
+        win.document.write(`
+            <html><head><title>طباعة الباركود</title>
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+            <style>body{display:flex;justify-content:center;align-items:center;height:100vh;background:#fff;margin:0;}.barcode-item{text-align:center;padding:30px;}</style>
+            </head><body>
+            <div class="barcode-item">
+                <svg id="print-barcode-svg"></svg>
+                <div style="margin-top:8px;font-weight:bold;font-size:16px;">${name}</div>
+                <div style="font-size:12px;color:#64748b;">${code}</div>
+            </div>
+            <script>
+                setTimeout(() => {
+                    JsBarcode("#print-barcode-svg", "${code}", { format:"CODE128", width:2, height:80, displayValue:true, fontSize:18 });
+                    window.print();
+                }, 600);
+            <\/script>
+            </body></html>
+        `);
+        win.document.close();
+    };
+
+    // ================================================================
+    // 6. الفواتير - دوال
+    // ================================================================
+    let tempInvoiceItems = [];
+
+    window.switchInvoiceTab = function(tabId) {
+        document.querySelectorAll('#invoicesTabs .tab-btn').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#invoicesTabs .tab-btn[onclick*="${tabId}"]`)?.classList.add('active');
+        document.querySelectorAll('#page-invoices .tab-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById('panel-' + tabId);
+        if (panel) panel.classList.add('active');
+        switch(tabId) {
+            case 'create-invoice': loadCreateInvoiceForm(); break;
+            case 'invoices-list': loadInvoices(); break;
+            case 'edit-invoice': break;
+        }
+    };
+
+    function loadAllInvoiceData() {
+        loadCreateInvoiceForm();
+        loadInvoices();
+    }
+
+    document.addEventListener('change', function(e) {
+        if (e.target.id === 'inv-payment') {
+            const dueField = document.getElementById('due-date-field');
+            if (e.target.value === 'credit') {
+                dueField.style.display = 'block';
+                document.getElementById('inv-due-date').value = new Date().toISOString().slice(0,10);
+            } else {
+                dueField.style.display = 'none';
+            }
+        }
+        if (e.target.id === 'edit-inv-payment') {
+            const dueField = document.getElementById('edit-due-date-field');
+            if (e.target.value === 'credit') {
+                dueField.style.display = 'block';
+                document.getElementById('edit-inv-due-date').value = new Date().toISOString().slice(0,10);
+            } else {
+                dueField.style.display = 'none';
+            }
+        }
+    });
+
+    function loadCreateInvoiceForm() {
+        const accounts = query("SELECT id, name, type FROM accounts ORDER BY name");
+        const accSel = document.getElementById('inv-account');
+        if (accSel) {
+            const val = accSel.value;
+            accSel.innerHTML = accounts.map(a => `<option value="${a.id}">${a.name} (${a.type})</option>`).join('');
+            if (val) accSel.value = val;
+        }
+        const currencies = query("SELECT * FROM currencies ORDER BY name");
+        const curSel = document.getElementById('inv-currency');
+        if (curSel) {
+            const val = curSel.value;
+            curSel.innerHTML = currencies.map(c => `<option value="${c.id}">${c.name} (${c.symbol})</option>`).join('');
+            if (val) curSel.value = val;
+            if (!val) {
+                const defaultCur = query("SELECT id FROM currencies WHERE is_default = 1")[0];
+                if (defaultCur) curSel.value = defaultCur.id;
+            }
+        }
+        loadInvoiceMaterials();
+        document.getElementById('inv-date').value = new Date().toISOString().slice(0,10);
+        document.getElementById('inv-payment').value = 'cash';
+        document.getElementById('due-date-field').style.display = 'none';
+        tempInvoiceItems = [];
+        renderInvoiceItems();
+        updateInvoiceFields();
+    }
+
+    function loadInvoiceMaterials() {
+        const materials = query("SELECT id, name, sell_price, cost_price FROM materials ORDER BY name");
+        const sel = document.getElementById('inv-material');
+        if (sel) {
+            const val = sel.value;
+            sel.innerHTML = materials.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+            if (val) sel.value = val;
+        }
+    }
+
+    function updateInvoiceFields() {
+        const type = document.getElementById('inv-type').value;
+        const accountSel = document.getElementById('inv-account');
+        const accounts = query("SELECT id, name, type FROM accounts ORDER BY name");
+        let filtered = accounts;
+        if (type === 'sale' || type === 'sale_return') {
+            filtered = accounts.filter(a => a.type === 'customer');
+        } else if (type === 'purchase' || type === 'purchase_return') {
+            filtered = accounts.filter(a => a.type === 'supplier');
+        }
+        const val = accountSel.value;
+        accountSel.innerHTML = filtered.map(a => `<option value="${a.id}">${a.name} (${a.type})</option>`).join('');
+        if (val) accountSel.value = val;
+    }
+
+    window.addInvoiceItem = function() {
+        const material_id = document.getElementById('inv-material').value;
+        const qty = parseFloat(document.getElementById('inv-qty').value) || 0;
+        const price = parseFloat(document.getElementById('inv-price').value) || 0;
+        const type = document.getElementById('inv-type').value;
+        if (!material_id) return alert('اختر مادة');
+        if (qty <= 0) return alert('أدخل كمية صحيحة');
+        if (price <= 0) return alert('أدخل سعراً صحيحاً');
+        const mat = query("SELECT * FROM materials WHERE id = ?", [material_id])[0];
+        if (!mat) return alert('المادة غير موجودة');
+        if ((type === 'sale' || type === 'damage' || type === 'purchase_return') && mat.quantity < qty) {
+            return alert(`الكمية غير متوفرة. المتاح: ${mat.quantity}`);
+        }
+        tempInvoiceItems.push({ material_id: parseInt(material_id), name: mat.name, quantity: qty, price: price, total: qty * price });
+        renderInvoiceItems();
+        document.getElementById('inv-qty').value = 1;
+        document.getElementById('inv-price').value = '';
+    };
+
+    window.removeInvoiceItem = function(index) {
+        tempInvoiceItems.splice(index, 1);
+        renderInvoiceItems();
+    };
+
+    function renderInvoiceItems() {
+        const tbody = document.getElementById('invoice-items-body');
+        let total = 0;
+        tbody.innerHTML = tempInvoiceItems.map((item, idx) => {
+            total += item.total;
+            return `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.price.toFixed(2)}</td>
+                    <td>${item.total.toFixed(2)}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="removeInvoiceItem(${idx})">✖</button></td>
+                </tr>
+            `;
+        }).join('');
+        document.getElementById('invoice-total-display').textContent = total.toFixed(2);
+    }
+
+    window.clearInvoice = function() {
+        if (tempInvoiceItems.length === 0) return;
+        if (!confirm('تفريغ جميع الأصناف؟')) return;
+        tempInvoiceItems = [];
+        renderInvoiceItems();
+    };
+
+    window.saveInvoice = function() {
+        if (tempInvoiceItems.length === 0) return alert('أضف أصنافاً للفاتورة');
+        const type = document.getElementById('inv-type').value;
+        const account_id = document.getElementById('inv-account').value;
+        const currency_id = document.getElementById('inv-currency').value;
+        const date = document.getElementById('inv-date').value;
+        const payment = document.getElementById('inv-payment').value;
+        const due_date = document.getElementById('inv-due-date').value || null;
+        const note = document.getElementById('inv-note').value.trim();
+        const total = tempInvoiceItems.reduce((s, i) => s + i.total, 0);
+        
+        if (!account_id) return alert('اختر حساباً');
+        if (!currency_id) return alert('اختر العملة');
+        if (!date) return alert('اختر التاريخ');
+        if (payment === 'credit' && !due_date) return alert('أدخل تاريخ الاستحقاق');
+        
+        for (let item of tempInvoiceItems) {
+            const mat = query("SELECT quantity FROM materials WHERE id = ?", [item.material_id])[0];
+            if (!mat) return alert(`المادة ${item.name} غير موجودة`);
+            if ((type === 'sale' || type === 'damage' || type === 'purchase_return') && mat.quantity < item.quantity) {
+                return alert(`الكمية غير متوفرة للمادة ${item.name}. المتاح: ${mat.quantity}`);
+            }
+        }
+        
+        const acc = query("SELECT * FROM accounts WHERE id = ?", [account_id])[0];
+        if (!acc) return alert('الحساب غير موجود');
+        
+        db.run("BEGIN TRANSACTION");
+        try {
+            db.run(`INSERT INTO invoices (type, account_id, currency_id, date, due_date, payment, note, total)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [type, account_id, currency_id, date, due_date, payment, note, total]);
+            const invoiceId = db.exec("SELECT last_insert_rowid()")[0].values[0][0];
+            
+            for (let item of tempInvoiceItems) {
+                db.run(`INSERT INTO invoice_items (invoice_id, material_id, quantity, price, total)
+                        VALUES (?, ?, ?, ?, ?)`,
+                        [invoiceId, item.material_id, item.quantity, item.price, item.total]);
+                const mat = query("SELECT quantity FROM materials WHERE id = ?", [item.material_id])[0];
+                let newQty = mat.quantity;
+                if (type === 'sale' || type === 'damage' || type === 'purchase_return') {
+                    newQty -= item.quantity;
+                } else if (type === 'purchase' || type === 'sale_return') {
+                    newQty += item.quantity;
+                }
+                db.run(`UPDATE materials SET quantity = ? WHERE id = ?`, [newQty, item.material_id]);
+            }
+            
+            let balanceChange = 0;
+            let debit = 0, credit = 0;
+            let entryType = '';
+            
+            if (type === 'sale') {
+                balanceChange = total;
+                debit = total;
+                entryType = 'receipt';
+            } else if (type === 'purchase') {
+                balanceChange = -total;
+                credit = total;
+                entryType = 'payment';
+            } else if (type === 'sale_return') {
+                balanceChange = -total;
+                credit = total;
+                entryType = 'payment';
+            } else if (type === 'purchase_return') {
+                balanceChange = total;
+                debit = total;
+                entryType = 'receipt';
+            }
+            
+            if (balanceChange !== 0) {
+                const newBalance = acc.balance + balanceChange;
+                db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, account_id]);
+                const description = `فاتورة ${type === 'sale' ? 'مبيع' : type === 'purchase' ? 'شراء' : type === 'sale_return' ? 'مردود مبيع' : 'مردود شراء'} #${invoiceId} ${payment === 'credit' ? '(آجل)' : '(نقدي)'}`;
+                db.run(`INSERT INTO journal_entries (account_id, date, description, debit, credit, entry_type, reference)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [account_id, date, description, debit, credit, entryType, `INV-${invoiceId}`]);
+            }
+            
+            db.run("COMMIT");
+            saveDB();
+            
+            tempInvoiceItems = [];
+            renderInvoiceItems();
+            loadInvoices();
+            loadAccounts();
+            loadJournal();
+            alert(`✅ تم حفظ الفاتورة بنجاح (${payment === 'credit' ? 'آجل' : 'نقدي'})`);
+        } catch(e) {
+            db.run("ROLLBACK");
+            alert('خطأ في حفظ الفاتورة: ' + e.message);
+        }
+    };
+
+    function loadInvoices() {
+        const search = document.getElementById('search-invoice')?.value.toLowerCase() || '';
+        const filterType = document.getElementById('filter-invoice-type')?.value || 'all';
+        const filterPayment = document.getElementById('filter-payment')?.value || 'all';
+        let sql = `SELECT i.*, a.name as account_name, c.name as currency_name, c.symbol as currency_symbol,
+                   GROUP_CONCAT(m.name || ' (x' || it.quantity || ')', ', ') as items_summary
+                   FROM invoices i
+                   LEFT JOIN accounts a ON i.account_id = a.id
+                   LEFT JOIN currencies c ON i.currency_id = c.id
+                   LEFT JOIN invoice_items it ON i.id = it.invoice_id
+                   LEFT JOIN materials m ON it.material_id = m.id
+                   WHERE 1=1`;
+        const params = [];
+        if (filterType !== 'all') { sql += ` AND i.type = ?`; params.push(filterType); }
+        if (filterPayment !== 'all') { sql += ` AND i.payment = ?`; params.push(filterPayment); }
+        if (search) {
+            sql += ` AND (LOWER(i.id) LIKE ? OR LOWER(i.type) LIKE ? OR LOWER(a.name) LIKE ? OR LOWER(i.note) LIKE ?)`;
+            const s = `%${search}%`;
+            params.push(s, s, s, s);
+        }
+        sql += ` GROUP BY i.id ORDER BY i.id DESC`;
+        const rows = query(sql, params);
+        const container = document.getElementById('invoices-list-container');
+        if (!container) return;
+        if (rows.length === 0) {
+            container.innerHTML = '<p style="color:#94a3b8;">لا توجد فواتير مطابقة للبحث.</p>';
+            return;
+        }
+        container.innerHTML = rows.map(inv => `
+            <div style="border:1px solid #e2e8f0;padding:15px;margin-bottom:12px;border-radius:8px;background:#fff;">
+                <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;">
+                    <div>
+                        <strong style="font-size:17px;">#${inv.id}</strong>
+                        <span class="badge ${inv.type === 'sale' ? 'green' : inv.type === 'purchase' ? 'blue' : inv.type === 'damage' ? 'red' : 'orange'}">${inv.type}</span>
+                        <span class="badge ${inv.payment === 'credit' ? 'yellow' : 'green'}">${inv.payment === 'credit' ? 'آجل' : 'نقدي'}</span>
+                        ${inv.due_date ? `<span style="font-size:12px;color:#64748b;">استحقاق: ${new Date(inv.due_date).toLocaleDateString()}</span>` : ''}
+                    </div>
+                    <div><span>${inv.account_name || 'بدون حساب'}</span><span style="color:#64748b;font-size:14px;margin-right:10px;">${inv.currency_name || ''}</span></div>
+                    <div><span style="font-weight:700;font-size:18px;">${inv.total.toFixed(2)}</span><span style="color:#64748b;font-size:14px;">${inv.currency_symbol || ''}</span></div>
+                    <div style="color:#64748b;font-size:14px;">${new Date(inv.date).toLocaleDateString()}</div>
+                    <div>
+                        <button class="btn btn-primary btn-sm" onclick="openEditInvoice(${inv.id})">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteInvoice(${inv.id})">✖</button>
+                        <button class="btn btn-print btn-sm" onclick="printInvoice(${inv.id})">🖨️</button>
+                        <button class="btn btn-share btn-sm" onclick="shareInvoice(${inv.id})">📤</button>
+                    </div>
+                </div>
+                <div style="font-size:14px;color:#64748b;margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9;">
+                    ${inv.items_summary || 'لا توجد أصناف'} ${inv.note ? ' | 📝 ' + inv.note : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ================================================================
+    // 7. دوال التقارير
+    // ================================================================
+    function loadAllReports() {
+        loadProfitLoss();
+        loadDailyMovement();
+        loadBudget();
+        loadTopMaterials();
+        loadTopCustomers();
+        loadLowStock();
+    }
+
+    window.switchReportTab = function(tabId) {
+        document.querySelectorAll('#reportsTabs .tab-btn').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#reportsTabs .tab-btn[onclick*="${tabId}"]`)?.classList.add('active');
+        document.querySelectorAll('#page-reports .tab-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById('panel-' + tabId);
+        if (panel) panel.classList.add('active');
+        switch(tabId) {
+            case 'profit-loss': loadProfitLoss(); break;
+            case 'daily-movement': loadDailyMovement(); break;
+            case 'budget': loadBudget(); break;
+            case 'top-materials': loadTopMaterials(); break;
+            case 'top-customers': loadTopCustomers(); break;
+            case 'low-stock': loadLowStock(); break;
+        }
+    };
+
+    window.loadProfitLoss = function() {
+        const from = document.getElementById('pl-from').value || '2000-01-01';
+        const to = document.getElementById('pl-to').value || new Date().toISOString().slice(0,10);
+        
+        const sales = query("SELECT total FROM invoices WHERE type = 'sale' AND date BETWEEN ? AND ?", [from, to]);
+        const purchases = query("SELECT total FROM invoices WHERE type = 'purchase' AND date BETWEEN ? AND ?", [from, to]);
+        const saleReturns = query("SELECT total FROM invoices WHERE type = 'sale_return' AND date BETWEEN ? AND ?", [from, to]);
+        const purchaseReturns = query("SELECT total FROM invoices WHERE type = 'purchase_return' AND date BETWEEN ? AND ?", [from, to]);
+        const damages = query("SELECT * FROM inventory_counts WHERE date BETWEEN ? AND ?", [from, to]);
+        
+        const totalSales = sales.reduce((s, r) => s + r.total, 0);
+        const totalPurchases = purchases.reduce((s, r) => s + r.total, 0);
+        const totalSaleReturns = saleReturns.reduce((s, r) => s + r.total, 0);
+        const totalPurchaseReturns = purchaseReturns.reduce((s, r) => s + r.total, 0);
+        const totalDamage = damages.reduce((s, r) => s + (r.difference < 0 ? -r.difference : 0), 0);
+        
+        const grossProfit = totalSales - totalPurchases;
+        const netProfit = grossProfit - totalSaleReturns + totalPurchaseReturns - totalDamage;
+        
+        const container = document.getElementById('profit-loss-result');
+        container.innerHTML = `
+            <div class="report-section">
+                <h4>📊 ملخص الأرباح والخسائر (${from} إلى ${to})</h4>
+                <div class="report-summary">
+                    <div class="item"><div class="label">إجمالي المبيعات</div><div class="value" style="color:#22c55e;">${totalSales.toFixed(2)}</div></div>
+                    <div class="item"><div class="label">إجمالي المشتريات</div><div class="value" style="color:#ef4444;">${totalPurchases.toFixed(2)}</div></div>
+                    <div class="item"><div class="label">مردودات المبيعات</div><div class="value" style="color:#ef4444;">${totalSaleReturns.toFixed(2)}</div></div>
+                    <div class="item"><div class="label">مردودات المشتريات</div><div class="value" style="color:#22c55e;">${totalPurchaseReturns.toFixed(2)}</div></div>
+                    <div class="item"><div class="label">قيمة التلف</div><div class="value" style="color:#ef4444;">${totalDamage.toFixed(2)}</div></div>
+                    <div class="item"><div class="label">إجمالي الربح الإجمالي</div><div class="value" style="color:${grossProfit >= 0 ? '#22c55e' : '#ef4444'};">${grossProfit.toFixed(2)}</div></div>
+                    <div class="item"><div class="label">صافي الربح/الخسارة</div><div class="value" style="color:${netProfit >= 0 ? '#22c55e' : '#ef4444'};font-size:26px;">${netProfit.toFixed(2)}</div></div>
+                </div>
+            </div>
+        `;
+    };
+
+    window.loadDailyMovement = function() {
+        const date = document.getElementById('dm-date').value || new Date().toISOString().slice(0,10);
+        
+        const sales = query("SELECT * FROM invoices WHERE type = 'sale' AND date = ?", [date]);
+        const purchases = query("SELECT * FROM invoices WHERE type = 'purchase' AND date = ?", [date]);
+        const saleReturns = query("SELECT * FROM invoices WHERE type = 'sale_return' AND date = ?", [date]);
+        const purchaseReturns = query("SELECT * FROM invoices WHERE type = 'purchase_return' AND date = ?", [date]);
+        const damages = query("SELECT * FROM inventory_counts WHERE date = ?", [date]);
+        
+        const container = document.getElementById('daily-movement-result');
+        if (sales.length === 0 && purchases.length === 0 && saleReturns.length === 0 && purchaseReturns.length === 0) {
+            container.innerHTML = '<p style="color:#94a3b8;">لا توجد حركات في هذا التاريخ.</p>';
+            return;
+        }
+        
+        let html = `<div class="report-section"><h4>📅 حركة اليوم (${date})</h4>`;
+        
+        if (sales.length > 0) {
+            html += `<div style="margin:10px 0;"><strong style="color:#22c55e;">🛒 المبيعات:</strong> ${sales.length} فاتورة - المجموع: ${sales.reduce((s, r) => s + r.total, 0).toFixed(2)}</div>`;
+            sales.forEach(inv => {
+                html += `<div style="padding:4px 15px;font-size:14px;color:#64748b;">#${inv.id} - ${inv.total.toFixed(2)}</div>`;
+            });
+        }
+        if (purchases.length > 0) {
+            html += `<div style="margin:10px 0;"><strong style="color:#3b82f6;">📥 المشتريات:</strong> ${purchases.length} فاتورة - المجموع: ${purchases.reduce((s, r) => s + r.total, 0).toFixed(2)}</div>`;
+            purchases.forEach(inv => {
+                html += `<div style="padding:4px 15px;font-size:14px;color:#64748b;">#${inv.id} - ${inv.total.toFixed(2)}</div>`;
+            });
+        }
+        if (saleReturns.length > 0) {
+            html += `<div style="margin:10px 0;"><strong style="color:#ef4444;">↩️ مردودات مبيع:</strong> ${saleReturns.length} فاتورة - المجموع: ${saleReturns.reduce((s, r) => s + r.total, 0).toFixed(2)}</div>`;
+        }
+        if (purchaseReturns.length > 0) {
+            html += `<div style="margin:10px 0;"><strong style="color:#f59e0b;">↪️ مردودات شراء:</strong> ${purchaseReturns.length} فاتورة - المجموع: ${purchaseReturns.reduce((s, r) => s + r.total, 0).toFixed(2)}</div>`;
+        }
+        if (damages.length > 0) {
+            const totalDamage = damages.reduce((s, r) => s + (r.difference < 0 ? -r.difference : 0), 0);
+            html += `<div style="margin:10px 0;"><strong style="color:#ef4444;">⚠️ التلف:</strong> ${totalDamage.toFixed(2)}</div>`;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    };
+
+    window.loadBudget = function() {
+        const assets = query("SELECT SUM(balance) as total FROM accounts WHERE type IN ('customer', 'expense')");
+        const liabilities = query("SELECT SUM(balance) as total FROM accounts WHERE type IN ('supplier', 'revenue')");
+        const totalAssets = assets[0]?.total || 0;
+        const totalLiabilities = liabilities[0]?.total || 0;
+        const equity = totalAssets - totalLiabilities;
+        
+        const materialsValue = query("SELECT SUM(quantity * cost_price) as value FROM materials")[0]?.value || 0;
+        
+        const container = document.getElementById('budget-result');
+        container.innerHTML = `
+            <div class="report-section">
+                <h4>⚖️ الميزانية العمومية</h4>
+                <div class="report-summary">
+                    <div class="item"><div class="label">إجمالي الأصول (مدين)</div><div class="value" style="color:#22c55e;">${totalAssets.toFixed(2)}</div></div>
+                    <div class="item"><div class="label">إجمالي الخصوم (دائن)</div><div class="value" style="color:#ef4444;">${totalLiabilities.toFixed(2)}</div></div>
+                    <div class="item"><div class="label">قيمة المخزون</div><div class="value" style="color:#3b82f6;">${materialsValue.toFixed(2)}</div></div>
+                    <div class="item" style="border-right:4px solid #3b82f6;"><div class="label">رأس المال (حقوق الملكية)</div><div class="value" style="color:${equity >= 0 ? '#22c55e' : '#ef4444'};font-size:26px;">${equity.toFixed(2)}</div></div>
+                </div>
+            </div>
+        `;
+    };
+
+    window.loadTopMaterials = function() {
+        const limit = document.getElementById('top-materials-limit').value || 10;
+        const rows = query(`
+            SELECT m.id, m.name, m.quantity, SUM(it.quantity) as total_moved,
+                   COUNT(it.id) as invoice_count
+            FROM invoice_items it
+            JOIN materials m ON it.material_id = m.id
+            GROUP BY it.material_id
+            ORDER BY total_moved DESC
+            LIMIT ?
+        `, [limit]);
+        
+        const container = document.getElementById('top-materials-result');
+        if (rows.length === 0) {
+            container.innerHTML = '<p style="color:#94a3b8;">لا توجد حركات للمواد.</p>';
+            return;
+        }
+        
+        let html = `
+            <div class="report-section">
+                <h4>📦 المواد الأكثر حركة</h4>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>#</th><th>المادة</th><th>الكمية المتاحة</th><th>إجمالي الحركة</th><th>عدد الفواتير</th></tr></thead>
+                        <tbody>
+        `;
+        rows.forEach((r, i) => {
+            html += `<tr>
+                <td>${i+1}</td>
+                <td><strong>${r.name}</strong></td>
+                <td>${r.quantity}</td>
+                <td>${r.total_moved}</td>
+                <td>${r.invoice_count}</td>
+            </tr>`;
+        });
+        html += `</tbody></table></div></div>`;
+        container.innerHTML = html;
+    };
+
+    window.loadTopCustomers = function() {
+        const limit = document.getElementById('top-customers-limit').value || 10;
+        const rows = query(`
+            SELECT a.id, a.name, a.balance, COUNT(i.id) as invoice_count,
+                   SUM(i.total) as total_amount
+            FROM accounts a
+            JOIN invoices i ON i.account_id = a.id
+            WHERE a.type = 'customer'
+            GROUP BY a.id
+            ORDER BY total_amount DESC
+            LIMIT ?
+        `, [limit]);
+        
+        const container = document.getElementById('top-customers-result');
+        if (rows.length === 0) {
+            container.innerHTML = '<p style="color:#94a3b8;">لا توجد حركات للعملاء.</p>';
+            return;
+        }
+        
+        let html = `
+            <div class="report-section">
+                <h4>👥 العملاء الأكثر حركة</h4>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>#</th><th>العميل</th><th>الرصيد</th><th>عدد الفواتير</th><th>إجمالي المشتريات</th></tr></thead>
+                        <tbody>
+        `;
+        rows.forEach((r, i) => {
+            html += `<tr>
+                <td>${i+1}</td>
+                <td><strong>${r.name}</strong></td>
+                <td style="color:${r.balance >= 0 ? '#22c55e' : '#ef4444'};">${r.balance.toFixed(2)}</td>
+                <td>${r.invoice_count}</td>
+                <td>${r.total_amount.toFixed(2)}</td>
+            </tr>`;
+        });
+        html += `</tbody></table></div></div>`;
+        container.innerHTML = html;
+    };
+
+    window.loadLowStock = function() {
+        const rows = query(`
+            SELECT * FROM materials 
+            WHERE quantity <= min_quantity 
+            ORDER BY quantity ASC
+        `);
+        
+        const container = document.getElementById('low-stock-result');
+        if (rows.length === 0) {
+            container.innerHTML = '<div class="report-section"><h4>⚠️ المواد التي وصلت الحد الأدنى</h4><p style="color:#22c55e;">✅ جميع المواد فوق الحد الأدنى</p></div>';
+            return;
+        }
+        
+        let html = `
+            <div class="report-section">
+                <h4>⚠️ المواد التي وصلت الحد الأدنى (${rows.length} مادة)</h4>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>#</th><th>المادة</th><th>الكمية</th><th>الحد الأدنى</th><th>الفرق</th><th>الحالة</th></tr></thead>
+                        <tbody>
+        `;
+        rows.forEach((r, i) => {
+            const diff = r.quantity - r.min_quantity;
+            const status = diff <= 0 ? '⚠️ ناقص' : '🟡 قريب';
+            html += `<tr>
+                <td>${i+1}</td>
+                <td><strong>${r.name}</strong></td>
+                <td>${r.quantity}</td>
+                <td>${r.min_quantity}</td>
+                <td style="color:${diff < 0 ? '#ef4444' : '#f59e0b'};">${diff.toFixed(2)}</td>
+                <td><span class="badge ${diff < 0 ? 'red' : 'yellow'}">${status}</span></td>
+            </tr>`;
+        });
+        html += `</tbody></table></div></div>`;
+        container.innerHTML = html;
+    };
+
+    // ================================================================
+    // 8. المزامنة
+    // ================================================================
+    window.exportDB = function() {
+        const data = db.export();
+        const blob = new Blob([data], { type: 'application/x-sqlite3' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup_${new Date().toISOString().slice(0,10)}.sqlite`;
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById('sync-status').textContent = '✅ تم التصدير';
+    };
+
+    window.importDB = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                const data = new Uint8Array(ev.target.result);
+                const newDb = new SQL.Database(data);
+                const test = newDb.exec("SELECT name FROM sqlite_master WHERE type='table'");
+                if (test.length === 0) return alert('ملف غير صالح');
+                db = newDb;
+                saveDB();
+                alert('✅ تم الاستيراد، سيتم إعادة تحميل الصفحة');
+                location.reload();
+            } catch(err) {
+                alert('فشل الاستيراد: ' + err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        e.target.value = '';
+    };
+
+    // ================================================================
+    // 9. Boot
+    // ================================================================
+    window.onload = function() {
+        try {
+            initSqlJs({ locateFile: () => 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm' })
+                .then(function(SQLModule) {
+                    SQL = SQLModule;
+                    db = loadDB();
+                    initDB();
+                    showPage('dashboard');
+                    console.log('✅ SQLite ready');
+                })
+                .catch(err => {
+                    localStorage.removeItem(DB_KEY);
+                    alert('تم إعادة تعيين قاعدة البيانات. سيتم تحديث الصفحة.');
+                    location.reload();
+                });
+        } catch(e) {
+            localStorage.removeItem(DB_KEY);
+            location.reload();
+        }
+    };
+</script>
+</body>
+</html>
