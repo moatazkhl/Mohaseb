@@ -6,7 +6,6 @@
     <title>نظام المحاسبة المتكامل</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family:system-ui; }
         body { background:#f1f5f9; display:flex; flex-direction:column; height:100vh; }
@@ -42,10 +41,6 @@
         .btn-outline { background:transparent; border:2px solid #e2e8f0; color:#0f172a; }
         .btn-outline:hover { background:#f8fafc; }
         .btn-sm { padding:6px 14px; font-size:14px; }
-        .btn-print { background:#8b5cf6; }
-        .btn-print:hover { background:#7c3aed; }
-        .btn-share { background:#06b6d4; }
-        .btn-share:hover { background:#0891b2; }
         .table-wrap { overflow-x:auto; margin-top:10px; }
         table { width:100%; border-collapse:collapse; }
         th, td { padding:12px; text-align:right; border-bottom:1px solid #e2e8f0; }
@@ -57,6 +52,7 @@
         .badge.orange { background:#fef3c7; color:#b45309; }
         .badge.purple { background:#e0e7ff; color:#4338ca; }
         .badge.yellow { background:#fef9c3; color:#854d0e; }
+        .badge.cash { background:#dcfce7; color:#15803d; }
         .tab-group { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px; border-bottom:2px solid #e2e8f0; padding-bottom:10px; }
         .tab-group .tab-btn { background:transparent; border:none; padding:8px 18px; border-radius:30px; font-weight:600; cursor:pointer; color:#64748b; }
         .tab-group .tab-btn.active { background:#3b82f6; color:#fff; }
@@ -80,26 +76,7 @@
         .logo-preview img { max-width:100%; max-height:80px; }
         .entry-item { border-bottom:1px solid #e2e8f0; padding:10px 0; display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; }
         .entry-item .actions { display:flex; gap:6px; }
-        .report-section { background:#f8fafc; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #e2e8f0; }
-        .report-section h4 { color:#0f172a; margin-bottom:10px; }
-        .report-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:15px; margin-bottom:15px; }
-        .report-summary .item { background:#fff; padding:15px; border-radius:8px; border:1px solid #e2e8f0; text-align:center; }
-        .report-summary .item .label { color:#64748b; font-size:13px; }
-        .report-summary .item .value { font-size:22px; font-weight:700; color:#0f172a; }
-        .print-area { padding:20px; background:#fff; border-radius:8px; }
-        .print-area .header { text-align:center; border-bottom:2px solid #0f172a; padding-bottom:10px; margin-bottom:15px; }
-        .print-area .header h2 { font-size:24px; }
-        .print-area .header .logo { max-height:80px; }
-        .print-area .footer { text-align:center; border-top:1px solid #e2e8f0; padding-top:10px; margin-top:15px; font-size:12px; color:#64748b; }
         @media (max-width:768px) { .main { padding:12px; } .flex-row .field { min-width:100%; } }
-        @media print {
-            .top-nav, .sub-nav, .no-print { display:none !important; }
-            .main { padding:10px; height:auto; overflow:visible; }
-            .page { display:block !important; }
-            .card { box-shadow:none; border:1px solid #ccc; break-inside:avoid; }
-            .print-area { border:none; padding:0; }
-            .btn { display:none !important; }
-        }
     </style>
 </head>
 <body>
@@ -112,7 +89,6 @@
     <button class="nav-btn" onclick="showPage('inventory')">المخزون</button>
     <button class="nav-btn" onclick="showPage('accounts')">الحسابات</button>
     <button class="nav-btn" onclick="showPage('settings')">الإعدادات</button>
-    <button class="nav-btn" onclick="showPage('reports')">التقارير</button>
     <button class="nav-btn" onclick="showPage('sync')">نسخ احتياطي</button>
 </div>
 <div class="sub-nav" id="subNav"></div>
@@ -135,7 +111,7 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- صفحة الفواتير -->
+    <!-- صفحة الفواتير (مختصرة) -->
     <!-- ========================================================= -->
     <div id="page-invoices" class="page">
         <h2>🧾 إدارة الفواتير</h2>
@@ -206,11 +182,6 @@
                         <option value="purchase_return">مردود شراء</option>
                         <option value="damage">تلف</option>
                     </select>
-                    <select id="filter-payment" onchange="loadInvoices()" style="padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:16px;">
-                        <option value="all">جميع الدفعات</option>
-                        <option value="cash">نقدي</option>
-                        <option value="credit">آجل</option>
-                    </select>
                     <button class="btn btn-primary btn-sm" onclick="switchInvoiceTab('create-invoice')">➕ فاتورة جديدة</button>
                 </div>
                 <div id="invoices-list-container"><p style="color:#94a3b8;">لا توجد فواتير.</p></div>
@@ -254,7 +225,7 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- صفحة المخزون -->
+    <!-- صفحة المخزون (مختصرة) -->
     <!-- ========================================================= -->
     <div id="page-inventory" class="page">
         <h2>📦 إدارة المخزون</h2>
@@ -384,7 +355,7 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- صفحة الحسابات -->
+    <!-- صفحة الحسابات (مع الإصلاح النهائي للصندوق) -->
     <!-- ========================================================= -->
     <div id="page-accounts" class="page">
         <h2>🏦 الحسابات والمصروفات</h2>
@@ -421,7 +392,7 @@
                 <h4 class="card-title">➕ حساب جديد</h4>
                 <div class="flex-row">
                     <div class="field"><label>اسم الحساب *</label><input id="acc-name" placeholder="مثال: محمد علي"></div>
-                    <div class="field"><label>النوع *</label><select id="acc-type"><option value="customer">زبون</option><option value="supplier">مورد</option><option value="expense">مصروف</option><option value="revenue">إيراد</option></select></div>
+                    <div class="field"><label>النوع *</label><select id="acc-type"><option value="customer">زبون</option><option value="supplier">مورد</option><option value="expense">مصروف</option><option value="revenue">إيراد</option><option value="cash">صندوق</option></select></div>
                     <div class="field"><label>رقم الهاتف</label><input id="acc-phone" placeholder="مثال: 0933123456"></div>
                     <div class="field"><label>العملة *</label><select id="acc-currency"></select></div>
                     <div class="field"><label>الرصيد الافتتاحي</label><input id="acc-balance" type="number" step="0.01" value="0"></div>
@@ -437,7 +408,7 @@
                 <input type="hidden" id="edit-acc-id">
                 <div class="flex-row">
                     <div class="field"><label>اسم الحساب *</label><input id="edit-acc-name" placeholder="اسم الحساب"></div>
-                    <div class="field"><label>النوع *</label><select id="edit-acc-type"><option value="customer">زبون</option><option value="supplier">مورد</option><option value="expense">مصروف</option><option value="revenue">إيراد</option></select></div>
+                    <div class="field"><label>النوع *</label><select id="edit-acc-type"><option value="customer">زبون</option><option value="supplier">مورد</option><option value="expense">مصروف</option><option value="revenue">إيراد</option><option value="cash">صندوق</option></select></div>
                     <div class="field"><label>رقم الهاتف</label><input id="edit-acc-phone" placeholder="رقم الهاتف"></div>
                     <div class="field"><label>العملة *</label><select id="edit-acc-currency"></select></div>
                     <div class="field"><label>الرصيد</label><input id="edit-acc-balance" type="number" step="0.01" value="0"></div>
@@ -561,19 +532,60 @@
             </div>
         </div>
         <div class="tab-panel" id="panel-currencies">
-            <div class="card"><h4 class="card-title">💱 العملات</h4><div id="currencies-list"></div></div>
+            <div class="card">
+                <h4 class="card-title">💱 العملات</h4>
+                <div class="flex-row">
+                    <div class="field"><label>الاسم</label><input id="cur-name" placeholder="دولار"></div>
+                    <div class="field"><label>الرمز</label><input id="cur-symbol" placeholder="$"></div>
+                    <div class="field"><label>سعر الصرف</label><input id="cur-rate" type="number" placeholder="15000"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="addCurrency()">➕ إضافة</button></div>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>الرمز</th><th>السعر</th><th>افتراضي</th><th>الإجراء</th></tr></thead><tbody id="currencies-table"></tbody></table></div>
+            </div>
         </div>
         <div class="tab-panel" id="panel-taxes">
-            <div class="card"><h4 class="card-title">🧾 الضرائب</h4><div id="taxes-list"></div></div>
+            <div class="card">
+                <h4 class="card-title">🧾 الضرائب</h4>
+                <div class="flex-row">
+                    <div class="field"><label>الاسم</label><input id="tax-name" placeholder="ضريبة القيمة"></div>
+                    <div class="field"><label>النسبة %</label><input id="tax-rate" type="number" placeholder="15"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="addTax()">➕ إضافة</button></div>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>النسبة</th><th>مفعل</th><th>الإجراء</th></tr></thead><tbody id="taxes-table"></tbody></table></div>
+            </div>
         </div>
         <div class="tab-panel" id="panel-users">
-            <div class="card"><h4 class="card-title">👥 المستخدمون</h4><div id="users-list"></div></div>
+            <div class="card">
+                <h4 class="card-title">👥 المستخدمون</h4>
+                <div class="flex-row">
+                    <div class="field"><label>اسم المستخدم</label><input id="user-name" placeholder="user"></div>
+                    <div class="field"><label>كلمة السر</label><input id="user-pass" type="password" placeholder="****"></div>
+                    <div class="field"><label>الدور</label><select id="user-role"><option value="user">مستخدم</option><option value="admin">مدير</option></select></div>
+                    <div class="field"><button class="btn btn-success" onclick="addUser()">➕ إضافة</button></div>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>#</th><th>اسم المستخدم</th><th>الدور</th><th>الإجراء</th></tr></thead><tbody id="users-table"></tbody></table></div>
+            </div>
         </div>
         <div class="tab-panel" id="panel-units">
-            <div class="card"><h4 class="card-title">📏 وحدات القياس</h4><div id="units-list"></div></div>
+            <div class="card">
+                <h4 class="card-title">📏 وحدات القياس</h4>
+                <div class="flex-row">
+                    <div class="field"><label>الاسم</label><input id="unit-name" placeholder="كيلوغرام"></div>
+                    <div class="field"><label>الاختصار</label><input id="unit-abbr" placeholder="كجم"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="addUnit()">➕ إضافة</button></div>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>الاختصار</th><th>الإجراء</th></tr></thead><tbody id="units-table"></tbody></table></div>
+            </div>
         </div>
         <div class="tab-panel" id="panel-categories">
-            <div class="card"><h4 class="card-title">📂 التصنيفات</h4><div id="categories-list"></div></div>
+            <div class="card">
+                <h4 class="card-title">📂 التصنيفات</h4>
+                <div class="flex-row">
+                    <div class="field"><label>اسم التصنيف</label><input id="cat-name-input" placeholder="مثال: إلكترونيات"></div>
+                    <div class="field"><button class="btn btn-primary" onclick="addCategory()">➕ إضافة</button></div>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>عدد المواد</th><th>الإجراء</th></tr></thead><tbody id="categories-table-settings"></tbody></table></div>
+            </div>
         </div>
         <div class="tab-panel" id="panel-printing">
             <div class="card">
@@ -589,39 +601,6 @@
                 <button class="btn btn-success" onclick="saveLogo()">💾 حفظ</button>
                 <button class="btn btn-danger" onclick="removeLogo()">🗑️ إزالة</button>
             </div>
-        </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- صفحة التقارير -->
-    <!-- ========================================================= -->
-    <div id="page-reports" class="page">
-        <h2>📊 التقارير</h2>
-        <div class="tab-group" id="reportsTabs">
-            <button class="tab-btn active" onclick="switchReportTab('profit-loss')">💰 الأرباح والخسائر</button>
-            <button class="tab-btn" onclick="switchReportTab('daily-movement')">📅 الحركة اليومية</button>
-            <button class="tab-btn" onclick="switchReportTab('budget')">⚖️ الميزانية ورأس المال</button>
-            <button class="tab-btn" onclick="switchReportTab('top-materials')">📦 المواد الأكثر حركة</button>
-            <button class="tab-btn" onclick="switchReportTab('top-customers')">👥 العملاء الأكثر حركة</button>
-            <button class="tab-btn" onclick="switchReportTab('low-stock')">⚠️ المواد التي وصلت الحد الأدنى</button>
-        </div>
-        <div class="tab-panel active" id="panel-profit-loss">
-            <div class="card"><h4 class="card-title">💰 الأرباح والخسائر</h4><div id="profit-loss-result"></div></div>
-        </div>
-        <div class="tab-panel" id="panel-daily-movement">
-            <div class="card"><h4 class="card-title">📅 الحركة اليومية</h4><div id="daily-movement-result"></div></div>
-        </div>
-        <div class="tab-panel" id="panel-budget">
-            <div class="card"><h4 class="card-title">⚖️ الميزانية ورأس المال</h4><div id="budget-result"></div></div>
-        </div>
-        <div class="tab-panel" id="panel-top-materials">
-            <div class="card"><h4 class="card-title">📦 المواد الأكثر حركة</h4><div id="top-materials-result"></div></div>
-        </div>
-        <div class="tab-panel" id="panel-top-customers">
-            <div class="card"><h4 class="card-title">👥 العملاء الأكثر حركة</h4><div id="top-customers-result"></div></div>
-        </div>
-        <div class="tab-panel" id="panel-low-stock">
-            <div class="card"><h4 class="card-title">⚠️ المواد التي وصلت الحد الأدنى</h4><div id="low-stock-result"></div></div>
         </div>
     </div>
 
@@ -683,14 +662,11 @@
         } catch (e) { console.error(e); alert('خطأ: ' + e.message); return false; }
     }
 
-    function getLastInsertId() {
-        return db.exec("SELECT last_insert_rowid()")[0].values[0][0];
-    }
-
     // ================================================================
     // 2. Init DB
     // ================================================================
     function initDB() {
+        // جداول الإعدادات
         db.run(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`);
         db.run(`CREATE TABLE IF NOT EXISTS currencies (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, symbol TEXT, exchange_rate REAL, is_default INTEGER DEFAULT 0)`);
         db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password_hash TEXT, role TEXT)`);
@@ -699,6 +675,7 @@
         db.run(`CREATE TABLE IF NOT EXISTS company (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, logo TEXT, address TEXT, phone TEXT, tax_number TEXT)`);
         db.run(`CREATE TABLE IF NOT EXISTS taxes (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, rate REAL, is_active INTEGER DEFAULT 1)`);
         
+        // جداول المخزون
         db.run(`CREATE TABLE IF NOT EXISTS materials (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -720,6 +697,7 @@
         try { db.run("ALTER TABLE materials ADD COLUMN min_quantity REAL DEFAULT 5"); } catch(e) {}
         try { db.run("ALTER TABLE materials ADD COLUMN notes TEXT"); } catch(e) {}
         
+        // جداول الفواتير
         db.run(`CREATE TABLE IF NOT EXISTS invoices (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             type TEXT,
@@ -758,6 +736,7 @@
             notes TEXT
         )`);
 
+        // جداول الحسابات
         db.run(`CREATE TABLE IF NOT EXISTS accounts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -780,6 +759,7 @@
             entry_type TEXT
         )`);
 
+        // بيانات افتراضية
         if (db.exec("SELECT COUNT(*) FROM currencies")[0].values[0][0] === 0) {
             db.run("INSERT INTO currencies (name, symbol, exchange_rate, is_default) VALUES ('ليرة سورية', 'ل.س', 1, 1)");
             db.run("INSERT INTO currencies (name, symbol, exchange_rate, is_default) VALUES ('دولار أمريكي', '$', 15000, 0)");
@@ -805,6 +785,7 @@
             db.run("INSERT INTO categories (name) VALUES ('مواد غذائية')");
         }
         if (db.exec("SELECT COUNT(*) FROM accounts")[0].values[0][0] === 0) {
+            db.run("INSERT INTO accounts (name, type, currency_id, balance) VALUES ('صندوق رئيسي', 'cash', 1, 0)");
             db.run("INSERT INTO accounts (name, type, currency_id, balance) VALUES ('زبون عام', 'customer', 1, 0)");
             db.run("INSERT INTO accounts (name, type, currency_id, balance) VALUES ('مورد عام', 'supplier', 1, 0)");
         }
@@ -832,7 +813,6 @@
                 (pageId === 'inventory' && btn.textContent.trim() === 'المخزون') ||
                 (pageId === 'accounts' && btn.textContent.trim() === 'الحسابات') ||
                 (pageId === 'settings' && btn.textContent.trim() === 'الإعدادات') ||
-                (pageId === 'reports' && btn.textContent.trim() === 'التقارير') ||
                 (pageId === 'sync' && btn.textContent.trim() === 'نسخ احتياطي')) {
                 btn.classList.add('active');
             }
@@ -843,7 +823,6 @@
         if (pageId === 'inventory') loadAllInventoryData();
         if (pageId === 'accounts') loadAllAccountsData();
         if (pageId === 'settings') loadAllSettings();
-        if (pageId === 'reports') loadAllReports();
     };
 
     // ================================================================
@@ -863,16 +842,12 @@
         document.getElementById('dash-profit').textContent = (saleTotal - purchaseTotal).toFixed(2);
         const recent = query("SELECT * FROM invoices ORDER BY id DESC LIMIT 5");
         document.getElementById('dash-recent').innerHTML = recent.map(r =>
-            `<div style="padding:8px 0;border-bottom:1px solid #e2e8f0;">
-                #${r.id} ${r.type} - ${r.total.toFixed(2)} - ${new Date(r.date).toLocaleString()}
-                <button class="btn btn-primary btn-sm" onclick="printInvoice(${r.id})">🖨️</button>
-                <button class="btn btn-share btn-sm" onclick="shareInvoice(${r.id})">📤</button>
-            </div>`
+            `<div style="padding:8px 0;border-bottom:1px solid #e2e8f0;">#${r.id} ${r.type} - ${r.total.toFixed(2)} - ${new Date(r.date).toLocaleString()}</div>`
         ).join('') || 'لا توجد فواتير.';
     }
 
     // ================================================================
-    // 5. الإعدادات - دوال عامة
+    // 5. الإعدادات - دوال عامة (مختصرة)
     // ================================================================
     function getSetting(key) {
         const res = query("SELECT value FROM settings WHERE key = ?", [key]);
@@ -911,24 +886,17 @@
         loadPrintSettings();
     }
 
-    // ================================================================
-    // 6. الإعدادات - العملات
-    // ================================================================
+    // دوال الإعدادات الأساسية (مختصرة)
     function loadCurrencies() {
         const rows = query("SELECT * FROM currencies ORDER BY id");
-        const container = document.getElementById('currencies-list');
-        if (!container) return;
+        const tbody = document.getElementById('currencies-table');
+        if (!tbody) return;
         if (rows.length === 0) {
-            container.innerHTML = '<p style="color:#94a3b8;">لا توجد عملات</p>';
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#94a3b8;">لا توجد عملات</td></tr>`;
             return;
         }
-        let html = `<div class="flex-row"><div class="field"><label>الاسم</label><input id="cur-name" placeholder="دولار"></div>
-                    <div class="field"><label>الرمز</label><input id="cur-symbol" placeholder="$"></div>
-                    <div class="field"><label>سعر الصرف</label><input id="cur-rate" type="number" placeholder="15000"></div>
-                    <div class="field"><button class="btn btn-primary" onclick="addCurrency()">➕ إضافة</button></div></div>
-                    <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>الرمز</th><th>السعر</th><th>افتراضي</th><th>الإجراء</th></tr></thead><tbody>`;
-        rows.forEach((c, i) => {
-            html += `<tr>
+        tbody.innerHTML = rows.map((c, i) => `
+            <tr>
                 <td>${i+1}</td>
                 <td>${c.name}</td>
                 <td>${c.symbol}</td>
@@ -938,10 +906,8 @@
                     ${!c.is_default ? `<button class="btn btn-primary btn-sm" onclick="setDefaultCur(${c.id})">تعيين</button>` : ''}
                     <button class="btn btn-danger btn-sm" onclick="delCur(${c.id})">✖</button>
                 </td>
-            </tr>`;
-        });
-        html += `</tbody></table></div>`;
-        container.innerHTML = html;
+            </tr>
+        `).join('');
     }
 
     window.addCurrency = function() {
@@ -978,23 +944,16 @@
         }
     };
 
-    // ================================================================
-    // 7. الإعدادات - الضرائب
-    // ================================================================
     function loadTaxes() {
         const rows = query("SELECT * FROM taxes ORDER BY id");
-        const container = document.getElementById('taxes-list');
-        if (!container) return;
+        const tbody = document.getElementById('taxes-table');
+        if (!tbody) return;
         if (rows.length === 0) {
-            container.innerHTML = '<p style="color:#94a3b8;">لا توجد ضرائب</p>';
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#94a3b8;">لا توجد ضرائب</td></tr>`;
             return;
         }
-        let html = `<div class="flex-row"><div class="field"><label>الاسم</label><input id="tax-name" placeholder="ضريبة القيمة"></div>
-                    <div class="field"><label>النسبة %</label><input id="tax-rate" type="number" placeholder="15"></div>
-                    <div class="field"><button class="btn btn-primary" onclick="addTax()">➕ إضافة</button></div></div>
-                    <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>النسبة</th><th>مفعل</th><th>الإجراء</th></tr></thead><tbody>`;
-        rows.forEach((t, i) => {
-            html += `<tr>
+        tbody.innerHTML = rows.map((t, i) => `
+            <tr>
                 <td>${i+1}</td>
                 <td>${t.name}</td>
                 <td>${t.rate}%</td>
@@ -1003,10 +962,8 @@
                     <button class="btn btn-warning btn-sm" onclick="toggleTax(${t.id})">${t.is_active ? 'إلغاء' : 'تفعيل'}</button>
                     <button class="btn btn-danger btn-sm" onclick="delTax(${t.id})">✖</button>
                 </td>
-            </tr>`;
-        });
-        html += `</tbody></table></div>`;
-        container.innerHTML = html;
+            </tr>
+        `).join('');
     }
 
     window.addTax = function() {
@@ -1035,32 +992,22 @@
         }
     };
 
-    // ================================================================
-    // 8. الإعدادات - المستخدمون
-    // ================================================================
     function loadUsers() {
         const rows = query("SELECT id, username, role FROM users ORDER BY id");
-        const container = document.getElementById('users-list');
-        if (!container) return;
+        const tbody = document.getElementById('users-table');
+        if (!tbody) return;
         if (rows.length === 0) {
-            container.innerHTML = '<p style="color:#94a3b8;">لا يوجد مستخدمون</p>';
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">لا يوجد مستخدمون</td></tr>`;
             return;
         }
-        let html = `<div class="flex-row"><div class="field"><label>اسم المستخدم</label><input id="user-name" placeholder="user"></div>
-                    <div class="field"><label>كلمة السر</label><input id="user-pass" type="password" placeholder="****"></div>
-                    <div class="field"><label>الدور</label><select id="user-role"><option value="user">مستخدم</option><option value="admin">مدير</option></select></div>
-                    <div class="field"><button class="btn btn-success" onclick="addUser()">➕ إضافة</button></div></div>
-                    <div class="table-wrap"><table><thead><tr><th>#</th><th>اسم المستخدم</th><th>الدور</th><th>الإجراء</th></tr></thead><tbody>`;
-        rows.forEach((u, i) => {
-            html += `<tr>
+        tbody.innerHTML = rows.map((u, i) => `
+            <tr>
                 <td>${i+1}</td>
                 <td>${u.username}</td>
                 <td>${u.role}</td>
                 <td>${u.username !== 'admin' ? `<button class="btn btn-danger btn-sm" onclick="delUser(${u.id})">✖</button>` : ''}</td>
-            </tr>`;
-        });
-        html += `</tbody></table></div>`;
-        container.innerHTML = html;
+            </tr>
+        `).join('');
     }
 
     window.addUser = function() {
@@ -1084,31 +1031,22 @@
         }
     };
 
-    // ================================================================
-    // 9. الإعدادات - الوحدات
-    // ================================================================
     function loadUnits() {
         const rows = query("SELECT * FROM units ORDER BY id");
-        const container = document.getElementById('units-list');
-        if (!container) return;
+        const tbody = document.getElementById('units-table');
+        if (!tbody) return;
         if (rows.length === 0) {
-            container.innerHTML = '<p style="color:#94a3b8;">لا توجد وحدات</p>';
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">لا توجد وحدات</td></tr>`;
             return;
         }
-        let html = `<div class="flex-row"><div class="field"><label>الاسم</label><input id="unit-name" placeholder="كيلوغرام"></div>
-                    <div class="field"><label>الاختصار</label><input id="unit-abbr" placeholder="كجم"></div>
-                    <div class="field"><button class="btn btn-primary" onclick="addUnit()">➕ إضافة</button></div></div>
-                    <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>الاختصار</th><th>الإجراء</th></tr></thead><tbody>`;
-        rows.forEach((u, i) => {
-            html += `<tr>
+        tbody.innerHTML = rows.map((u, i) => `
+            <tr>
                 <td>${i+1}</td>
                 <td>${u.name}</td>
                 <td>${u.abbreviation}</td>
                 <td><button class="btn btn-danger btn-sm" onclick="delUnit(${u.id})">✖</button></td>
-            </tr>`;
-        });
-        html += `</tbody></table></div>`;
-        container.innerHTML = html;
+            </tr>
+        `).join('');
     }
 
     window.addUnit = function() {
@@ -1129,22 +1067,16 @@
         }
     };
 
-    // ================================================================
-    // 10. الإعدادات - التصنيفات
-    // ================================================================
     function loadCategoriesSettings() {
         const rows = query("SELECT c.*, COUNT(m.id) as material_count FROM categories c LEFT JOIN materials m ON m.category_id = c.id GROUP BY c.id ORDER BY c.name");
-        const container = document.getElementById('categories-list');
-        if (!container) return;
+        const tbody = document.getElementById('categories-table-settings');
+        if (!tbody) return;
         if (rows.length === 0) {
-            container.innerHTML = '<p style="color:#94a3b8;">لا توجد تصنيفات</p>';
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">لا توجد تصنيفات</td></tr>`;
             return;
         }
-        let html = `<div class="flex-row"><div class="field"><label>اسم التصنيف</label><input id="cat-name-input" placeholder="مثال: إلكترونيات"></div>
-                    <div class="field"><button class="btn btn-primary" onclick="addCategory()">➕ إضافة</button></div></div>
-                    <div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>عدد المواد</th><th>الإجراء</th></tr></thead><tbody>`;
-        rows.forEach((c, i) => {
-            html += `<tr>
+        tbody.innerHTML = rows.map((c, i) => `
+            <tr>
                 <td>${i+1}</td>
                 <td><strong>${c.name}</strong></td>
                 <td>${c.material_count}</td>
@@ -1152,10 +1084,8 @@
                     <button class="btn btn-primary btn-sm" onclick="editCategory(${c.id}, '${c.name}')">✏️ تعديل</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteCategory(${c.id})">✖ حذف</button>
                 </td>
-            </tr>`;
-        });
-        html += `</tbody></table></div>`;
-        container.innerHTML = html;
+            </tr>
+        `).join('');
     }
 
     window.addCategory = function() {
@@ -1188,9 +1118,6 @@
         }
     };
 
-    // ================================================================
-    // 11. الإعدادات - الأمان وبيانات الشركة
-    // ================================================================
     function loadSecurity() {
         const enabled = getSetting('enable_password') === '1';
         document.getElementById('enable-password').checked = enabled;
@@ -1242,9 +1169,6 @@
         alert('✅ تم الحفظ');
     };
 
-    // ================================================================
-    // 12. الإعدادات - الشعار والطباعة
-    // ================================================================
     let logoData = null;
 
     window.previewLogo = function(e) {
@@ -1299,7 +1223,7 @@
     }
 
     // ================================================================
-    // 13. الحسابات - تبويبات
+    // 6. الحسابات - دوال (مع الإصلاح النهائي)
     // ================================================================
     window.switchAccountTab = function(tabId) {
         document.querySelectorAll('#accountsTabs .tab-btn').forEach(t => t.classList.remove('active'));
@@ -1345,7 +1269,7 @@
     }
 
     // ================================================================
-    // 14. الحسابات - قائمة الحسابات
+    // 7. قائمة الحسابات
     // ================================================================
     function loadAccounts() {
         const search = document.getElementById('search-account')?.value.toLowerCase() || '';
@@ -1371,7 +1295,7 @@
             <tr>
                 <td>${i+1}</td>
                 <td><strong>${acc.name}</strong></td>
-                <td><span class="badge ${acc.type === 'customer' ? 'blue' : acc.type === 'supplier' ? 'orange' : acc.type === 'expense' ? 'red' : 'green'}">${acc.type}</span></td>
+                <td><span class="badge ${acc.type === 'customer' ? 'blue' : acc.type === 'supplier' ? 'orange' : acc.type === 'expense' ? 'red' : acc.type === 'cash' ? 'green' : 'purple'}">${acc.type}</span></td>
                 <td>${acc.phone || '-'}</td>
                 <td>${acc.currency_name || 'غير محدد'}</td>
                 <td style="color:${acc.balance >= 0 ? '#22c55e' : '#ef4444'};">
@@ -1387,7 +1311,7 @@
     }
 
     // ================================================================
-    // 15. الحسابات - إضافة وتعديل وحذف
+    // 8. إضافة وتعديل وحذف الحسابات
     // ================================================================
     window.saveAccount = function() {
         const name = document.getElementById('acc-name').value.trim();
@@ -1407,15 +1331,9 @@
         }
     };
 
-    // ================================================================
-    // دالة تعديل الحساب - تفتح صفحة التعديل
-    // ================================================================
     window.openEditAccount = function(id) {
         const acc = query("SELECT * FROM accounts WHERE id = ?", [id])[0];
-        if (!acc) {
-            alert('الحساب غير موجود');
-            return;
-        }
+        if (!acc) return alert('الحساب غير موجود');
         document.getElementById('edit-acc-id').value = acc.id;
         document.getElementById('edit-acc-name').value = acc.name;
         document.getElementById('edit-acc-type').value = acc.type;
@@ -1427,9 +1345,6 @@
         switchAccountTab('edit-account');
     };
 
-    // ================================================================
-    // دالة تحديث الحساب - حفظ التعديلات
-    // ================================================================
     window.updateAccount = function() {
         const id = document.getElementById('edit-acc-id').value;
         const name = document.getElementById('edit-acc-name').value.trim();
@@ -1447,9 +1362,6 @@
         }
     };
 
-    // ================================================================
-    // دالة حذف الحساب
-    // ================================================================
     window.deleteAccount = function(id) {
         if (!confirm('حذف الحساب؟ سيتم حذف جميع الحركات المرتبطة به.')) return;
         run("DELETE FROM journal_entries WHERE account_id = ?", [id]);
@@ -1494,7 +1406,7 @@
     }
 
     // ================================================================
-    // 16. الحسابات - دفتر الأستاذ
+    // 9. دفتر الأستاذ
     // ================================================================
     function loadJournal() {
         const accountId = document.getElementById('journal-filter-account')?.value || 'all';
@@ -1526,10 +1438,10 @@
                 <td>${j.date || ''}</td>
                 <td>${j.account_name || 'حذف'}</td>
                 <td>${j.description || ''}</td>
-                <td style="color:${j.debit > 0 ? '#22c55e' : '#94a3b8'};">
+                <td style="color:${j.debit > 0 ? '#22c55e' : '#94a3b8'};font-weight:${j.debit > 0 ? 'bold' : 'normal'};">
                     ${j.debit ? j.debit.toFixed(2) + ' ' + (j.currency_symbol || '') : '-'}
                 </td>
-                <td style="color:${j.credit > 0 ? '#ef4444' : '#94a3b8'};">
+                <td style="color:${j.credit > 0 ? '#ef4444' : '#94a3b8'};font-weight:${j.credit > 0 ? 'bold' : 'normal'};">
                     ${j.credit ? j.credit.toFixed(2) + ' ' + (j.currency_symbol || '') : '-'}
                 </td>
                 <td><span class="badge ${j.entry_type === 'receipt' ? 'green' : j.entry_type === 'payment' ? 'red' : j.entry_type === 'expense' ? 'orange' : 'blue'}">${j.entry_type}</span></td>
@@ -1538,7 +1450,7 @@
     }
 
     // ================================================================
-    // 17. الحسابات - سندات قبض/دفع
+    // 10. سندات قبض/دفع (الإصلاح النهائي للصندوق)
     // ================================================================
     function loadEntryForm() {
         document.getElementById('entry-date').value = new Date().toISOString().slice(0,10);
@@ -1588,7 +1500,7 @@
     }
 
     // ================================================================
-    // دالة حفظ سند قبض/دفع
+    // حفظ السند - الإصلاح النهائي
     // ================================================================
     window.saveEntry = function() {
         const type = document.getElementById('entry-type').value;
@@ -1596,6 +1508,7 @@
         const amount = parseFloat(document.getElementById('entry-amount').value);
         const date = document.getElementById('entry-date').value;
         const desc = document.getElementById('entry-desc').value.trim();
+        
         if (!account_id || account_id === 'all') return alert('اختر حساباً');
         if (!amount || amount <= 0) return alert('أدخل مبلغاً صحيحاً');
         if (!date) return alert('أدخل التاريخ');
@@ -1603,28 +1516,95 @@
         const acc = query("SELECT * FROM accounts WHERE id = ?", [account_id])[0];
         if (!acc) return alert('الحساب غير موجود');
 
-        let debit = 0, credit = 0;
-        let balanceChange = 0;
+        // جلب حساب الصندوق
+        const cashAcc = query("SELECT * FROM accounts WHERE type = 'cash' LIMIT 1")[0];
+        if (!cashAcc) return alert('لا يوجد حساب صندوق رئيسي. أضف حساباً من نوع cash');
 
+        let accountDebit = 0, accountCredit = 0;
+        let cashDebit = 0, cashCredit = 0;
+        let accountBalanceChange = 0;
+        let cashBalanceChange = 0;
+
+        // ===== المنطق الصحيح للصندوق =====
         if (acc.type === 'customer') {
-            if (type === 'receipt') { debit = amount; balanceChange = amount; }
-            else { credit = amount; balanceChange = -amount; }
+            // الزبون: الرصيد الموجب = مدين لك
+            if (type === 'receipt') { 
+                // قبض من الزبون = ينقص رصيد الزبون، يزيد الصندوق
+                accountCredit = amount;
+                accountBalanceChange = -amount;
+                cashDebit = amount;
+                cashBalanceChange = amount;
+            } else { 
+                // دفع للزبون = يزيد رصيد الزبون، ينقص الصندوق
+                accountDebit = amount;
+                accountBalanceChange = amount;
+                cashCredit = amount;
+                cashBalanceChange = -amount;
+            }
         } else if (acc.type === 'supplier') {
-            if (type === 'receipt') { credit = amount; balanceChange = -amount; }
-            else { debit = amount; balanceChange = amount; }
+            // المورد: الرصيد الموجب = أنت مدين له
+            if (type === 'receipt') { 
+                // قبض من المورد = يزيد رصيد المورد، ينقص الصندوق
+                accountDebit = amount;
+                accountBalanceChange = amount;
+                cashCredit = amount;
+                cashBalanceChange = -amount;
+            } else { 
+                // دفع للمورد = ينقص رصيد المورد، يزيد الصندوق
+                accountCredit = amount;
+                accountBalanceChange = -amount;
+                cashDebit = amount;
+                cashBalanceChange = amount;
+            }
+        } else if (acc.type === 'cash') {
+            // إذا كان الحساب هو الصندوق نفسه
+            if (type === 'receipt') { 
+                accountDebit = amount; 
+                accountBalanceChange = amount;
+            } else { 
+                accountCredit = amount; 
+                accountBalanceChange = -amount;
+            }
         } else {
-            if (type === 'receipt') { debit = amount; balanceChange = amount; }
-            else { credit = amount; balanceChange = -amount; }
+            // حسابات أخرى (مصروف، إيراد)
+            if (type === 'receipt') { 
+                accountDebit = amount; 
+                accountBalanceChange = amount;
+                cashCredit = amount;
+                cashBalanceChange = -amount;
+            } else { 
+                accountCredit = amount; 
+                accountBalanceChange = -amount;
+                cashDebit = amount;
+                cashBalanceChange = amount;
+            }
         }
 
-        const newBalance = acc.balance + balanceChange;
+        const newAccountBalance = acc.balance + accountBalanceChange;
+        const newCashBalance = cashAcc.balance + cashBalanceChange;
 
         db.run("BEGIN TRANSACTION");
         try {
+            // سجل الحركة في الحساب المحدد
             db.run(`INSERT INTO journal_entries (account_id, date, description, debit, credit, entry_type, reference)
                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [account_id, date, desc, debit, credit, type, '']);
-            db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, account_id]);
+                    [account_id, date, desc, accountDebit, accountCredit, type, '']);
+            
+            // سجل الحركة في الصندوق (إذا كان الحساب ليس الصندوق نفسه)
+            if (acc.type !== 'cash' && (cashDebit !== 0 || cashCredit !== 0)) {
+                db.run(`INSERT INTO journal_entries (account_id, date, description, debit, credit, entry_type, reference)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [cashAcc.id, date, 'تسوية صندوق: ' + desc, cashDebit, cashCredit, type, '']);
+            }
+            
+            // تحديث رصيد الحساب
+            db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newAccountBalance, account_id]);
+            
+            // تحديث رصيد الصندوق (إذا لم يكن الحساب هو الصندوق نفسه)
+            if (acc.type !== 'cash' && (cashBalanceChange !== 0)) {
+                db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newCashBalance, cashAcc.id]);
+            }
+            
             db.run("COMMIT");
             saveDB();
             document.getElementById('entry-amount').value = '';
@@ -1632,7 +1612,7 @@
             loadJournal();
             loadEntriesList();
             loadAccounts();
-            alert('✅ تم تسجيل السند بنجاح');
+            alert('✅ تم تسجيل السند بنجاح وتحديث الصندوق');
         } catch(e) {
             db.run("ROLLBACK");
             alert('خطأ: ' + e.message);
@@ -1640,14 +1620,11 @@
     };
 
     // ================================================================
-    // دالة فتح تعديل السند
+    // تعديل سند
     // ================================================================
     window.openEditEntry = function(id) {
         const entry = query("SELECT * FROM journal_entries WHERE id = ?", [id])[0];
-        if (!entry) {
-            alert('السند غير موجود');
-            return;
-        }
+        if (!entry) return alert('السند غير موجود');
         document.getElementById('edit-entry-id').value = entry.id;
         document.getElementById('edit-entry-type').value = entry.entry_type;
         document.getElementById('edit-entry-amount').value = entry.debit || entry.credit || 0;
@@ -1659,9 +1636,6 @@
         switchAccountTab('edit-entry');
     };
 
-    // ================================================================
-    // دالة تحديث السند
-    // ================================================================
     window.updateEntry = function() {
         const id = document.getElementById('edit-entry-id').value;
         const type = document.getElementById('edit-entry-type').value;
@@ -1677,39 +1651,140 @@
         if (!oldEntry) return alert('السند غير موجود');
         const acc = query("SELECT * FROM accounts WHERE id = ?", [account_id])[0];
         if (!acc) return alert('الحساب غير موجود');
+        const cashAcc = query("SELECT * FROM accounts WHERE type = 'cash' LIMIT 1")[0];
+        if (!cashAcc) return alert('لا يوجد حساب صندوق');
 
-        let oldDebit = oldEntry.debit || 0;
-        let oldCredit = oldEntry.credit || 0;
-        let oldBalanceChange = 0;
+        // حساب التغيير القديم
+        let oldAccountChange = 0;
+        let oldCashChange = 0;
+        let oldAmount = oldEntry.debit || oldEntry.credit || 0;
         
         if (acc.type === 'customer') {
-            oldBalanceChange = oldEntry.entry_type === 'receipt' ? oldDebit : -oldCredit;
+            if (oldEntry.entry_type === 'receipt') {
+                oldAccountChange = -oldAmount;
+                oldCashChange = oldAmount;
+            } else {
+                oldAccountChange = oldAmount;
+                oldCashChange = -oldAmount;
+            }
         } else if (acc.type === 'supplier') {
-            oldBalanceChange = oldEntry.entry_type === 'receipt' ? -oldCredit : oldDebit;
+            if (oldEntry.entry_type === 'receipt') {
+                oldAccountChange = oldAmount;
+                oldCashChange = -oldAmount;
+            } else {
+                oldAccountChange = -oldAmount;
+                oldCashChange = oldAmount;
+            }
+        } else if (acc.type === 'cash') {
+            if (oldEntry.entry_type === 'receipt') {
+                oldAccountChange = oldAmount;
+            } else {
+                oldAccountChange = -oldAmount;
+            }
         } else {
-            oldBalanceChange = oldEntry.entry_type === 'receipt' ? oldDebit : -oldCredit;
+            if (oldEntry.entry_type === 'receipt') {
+                oldAccountChange = oldAmount;
+                oldCashChange = -oldAmount;
+            } else {
+                oldAccountChange = -oldAmount;
+                oldCashChange = oldAmount;
+            }
         }
 
-        let newDebit = type === 'receipt' ? amount : 0;
-        let newCredit = type === 'payment' ? amount : 0;
-        let newBalanceChange = 0;
+        // حساب التغيير الجديد
+        let newAccountChange = 0;
+        let newCashChange = 0;
         
         if (acc.type === 'customer') {
-            newBalanceChange = type === 'receipt' ? amount : -amount;
+            if (type === 'receipt') {
+                newAccountChange = -amount;
+                newCashChange = amount;
+            } else {
+                newAccountChange = amount;
+                newCashChange = -amount;
+            }
         } else if (acc.type === 'supplier') {
-            newBalanceChange = type === 'receipt' ? -amount : amount;
+            if (type === 'receipt') {
+                newAccountChange = amount;
+                newCashChange = -amount;
+            } else {
+                newAccountChange = -amount;
+                newCashChange = amount;
+            }
+        } else if (acc.type === 'cash') {
+            if (type === 'receipt') {
+                newAccountChange = amount;
+            } else {
+                newAccountChange = -amount;
+            }
         } else {
-            newBalanceChange = type === 'receipt' ? amount : -amount;
+            if (type === 'receipt') {
+                newAccountChange = amount;
+                newCashChange = -amount;
+            } else {
+                newAccountChange = -amount;
+                newCashChange = amount;
+            }
         }
 
-        const diff = newBalanceChange - oldBalanceChange;
-        const newBalance = acc.balance + diff;
+        const accountDiff = newAccountChange - oldAccountChange;
+        const cashDiff = newCashChange - oldCashChange;
+
+        const newAccountBalance = acc.balance + accountDiff;
+        const newCashBalance = cashAcc.balance + cashDiff;
+
+        let newDebit = 0, newCredit = 0;
+        let cashNewDebit = 0, cashNewCredit = 0;
+        
+        if (acc.type === 'customer') {
+            if (type === 'receipt') {
+                newCredit = amount;
+                cashNewDebit = amount;
+            } else {
+                newDebit = amount;
+                cashNewCredit = amount;
+            }
+        } else if (acc.type === 'supplier') {
+            if (type === 'receipt') {
+                newDebit = amount;
+                cashNewCredit = amount;
+            } else {
+                newCredit = amount;
+                cashNewDebit = amount;
+            }
+        } else if (acc.type === 'cash') {
+            if (type === 'receipt') {
+                newDebit = amount;
+            } else {
+                newCredit = amount;
+            }
+        } else {
+            if (type === 'receipt') {
+                newDebit = amount;
+                cashNewCredit = amount;
+            } else {
+                newCredit = amount;
+                cashNewDebit = amount;
+            }
+        }
 
         db.run("BEGIN TRANSACTION");
         try {
             db.run(`UPDATE journal_entries SET account_id = ?, date = ?, description = ?, debit = ?, credit = ?, entry_type = ? WHERE id = ?`,
                     [account_id, date, desc, newDebit, newCredit, type, id]);
-            db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, account_id]);
+            
+            if (acc.type !== 'cash' && (cashNewDebit !== 0 || cashNewCredit !== 0)) {
+                const cashEntry = query("SELECT * FROM journal_entries WHERE reference = ? AND account_id = ?", [oldEntry.reference || '', cashAcc.id])[0];
+                if (cashEntry) {
+                    db.run(`UPDATE journal_entries SET date = ?, description = ?, debit = ?, credit = ?, entry_type = ? WHERE id = ?`,
+                            [date, 'تسوية صندوق: ' + desc, cashNewDebit, cashNewCredit, type, cashEntry.id]);
+                }
+            }
+            
+            db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newAccountBalance, account_id]);
+            if (acc.type !== 'cash' && cashDiff !== 0) {
+                db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newCashBalance, cashAcc.id]);
+            }
             db.run("COMMIT");
             saveDB();
             alert('✅ تم تعديل السند بنجاح');
@@ -1724,7 +1799,7 @@
     };
 
     // ================================================================
-    // دالة حذف السند
+    // حذف سند
     // ================================================================
     window.deleteEntry = function(id) {
         if (!confirm('حذف السند؟ سيتم استرجاع الرصيد.')) return;
@@ -1732,24 +1807,58 @@
         if (!entry) return alert('السند غير موجود');
         const acc = query("SELECT * FROM accounts WHERE id = ?", [entry.account_id])[0];
         if (!acc) return alert('الحساب غير موجود');
+        const cashAcc = query("SELECT * FROM accounts WHERE type = 'cash' LIMIT 1")[0];
+        if (!cashAcc) return alert('لا يوجد حساب صندوق');
 
-        let oldAmount = entry.debit || entry.credit || 0;
-        let balanceChange = 0;
+        let accountChange = 0;
+        let cashChange = 0;
+        let amount = entry.debit || entry.credit || 0;
         
         if (acc.type === 'customer') {
-            balanceChange = entry.debit ? oldAmount : -oldAmount;
+            if (entry.entry_type === 'receipt') {
+                accountChange = -amount;
+                cashChange = amount;
+            } else {
+                accountChange = amount;
+                cashChange = -amount;
+            }
         } else if (acc.type === 'supplier') {
-            balanceChange = entry.debit ? -oldAmount : oldAmount;
+            if (entry.entry_type === 'receipt') {
+                accountChange = amount;
+                cashChange = -amount;
+            } else {
+                accountChange = -amount;
+                cashChange = amount;
+            }
+        } else if (acc.type === 'cash') {
+            if (entry.entry_type === 'receipt') {
+                accountChange = amount;
+            } else {
+                accountChange = -amount;
+            }
         } else {
-            balanceChange = entry.debit ? oldAmount : -oldAmount;
+            if (entry.entry_type === 'receipt') {
+                accountChange = amount;
+                cashChange = -amount;
+            } else {
+                accountChange = -amount;
+                cashChange = amount;
+            }
         }
 
-        const newBalance = acc.balance - balanceChange;
+        const newAccountBalance = acc.balance - accountChange;
+        const newCashBalance = cashAcc.balance - cashChange;
 
         db.run("BEGIN TRANSACTION");
         try {
             db.run("DELETE FROM journal_entries WHERE id = ?", [id]);
-            db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, acc.id]);
+            if (acc.type !== 'cash' && cashChange !== 0) {
+                db.run("DELETE FROM journal_entries WHERE reference = ? AND account_id = ?", [entry.reference || '', cashAcc.id]);
+            }
+            db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newAccountBalance, acc.id]);
+            if (acc.type !== 'cash' && cashChange !== 0) {
+                db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newCashBalance, cashAcc.id]);
+            }
             db.run("COMMIT");
             saveDB();
             loadJournal();
@@ -1763,7 +1872,7 @@
     };
 
     // ================================================================
-    // 18. الحسابات - مصاريف وإيرادات
+    // 11. مصاريف وإيرادات
     // ================================================================
     function loadExpenseForm() {
         document.getElementById('expense-date').value = new Date().toISOString().slice(0,10);
@@ -1810,9 +1919,6 @@
         }).join('');
     }
 
-    // ================================================================
-    // دالة حفظ مصروف/إيراد
-    // ================================================================
     window.saveExpense = function() {
         const type = document.getElementById('expense-type').value;
         const account_id = document.getElementById('expense-account').value;
@@ -1827,6 +1933,8 @@
 
         let acc = null;
         let balanceChange = 0;
+        const cashAcc = query("SELECT * FROM accounts WHERE type = 'cash' LIMIT 1")[0];
+        
         if (account_id && account_id !== '') {
             acc = query("SELECT * FROM accounts WHERE id = ?", [account_id])[0];
             if (acc) {
@@ -1839,6 +1947,22 @@
             db.run(`INSERT INTO journal_entries (account_id, date, description, debit, credit, entry_type, reference)
                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
                     [account_id && account_id !== '' ? account_id : null, date, desc, debit, credit, type, '']);
+            
+            // تأثير على الصندوق
+            if (cashAcc) {
+                let cashDebit = 0, cashCredit = 0;
+                if (type === 'expense') {
+                    cashCredit = amount;
+                } else {
+                    cashDebit = amount;
+                }
+                db.run(`INSERT INTO journal_entries (account_id, date, description, debit, credit, entry_type, reference)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [cashAcc.id, date, 'تسوية صندوق: ' + desc, cashDebit, cashCredit, type, '']);
+                const newCashBalance = cashAcc.balance + (cashDebit - cashCredit);
+                db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newCashBalance, cashAcc.id]);
+            }
+            
             if (acc) {
                 const newBalance = acc.balance + balanceChange;
                 db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, acc.id]);
@@ -1858,7 +1982,7 @@
     };
 
     // ================================================================
-    // 19. الحسابات - كشف حساب
+    // 12. كشف حساب
     // ================================================================
     function loadStatementForm() {
         updateAccountSelects();
@@ -1866,7 +1990,6 @@
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
         document.getElementById('statement-from').value = firstDay.toISOString().slice(0,10);
         document.getElementById('statement-to').value = now.toISOString().slice(0,10);
-        loadStatement();
     }
 
     window.loadStatement = function() {
@@ -1877,6 +2000,7 @@
         }
         const from = document.getElementById('statement-from').value;
         const to = document.getElementById('statement-to').value;
+        
         let sql = `SELECT j.*, a.name as account_name, c.name as currency_name, c.symbol as currency_symbol
                    FROM journal_entries j
                    LEFT JOIN accounts a ON j.account_id = a.id
@@ -1886,6 +2010,7 @@
         if (from) { sql += ` AND j.date >= ?`; params.push(from); }
         if (to) { sql += ` AND j.date <= ?`; params.push(to); }
         sql += ` ORDER BY j.date ASC`;
+        
         const rows = query(sql, params);
         const acc = query(`SELECT a.*, c.name as currency_name, c.symbol as currency_symbol 
                            FROM accounts a 
@@ -1893,47 +2018,59 @@
                            WHERE a.id = ?`, [account_id])[0];
         const container = document.getElementById('statement-result');
         if (!container) return;
+        
         if (rows.length === 0) {
             container.innerHTML = `<p style="color:#94a3b8;">لا توجد حركات لهذا الحساب في الفترة المحددة.</p>`;
             return;
         }
+        
         let runningBalance = 0;
         let totalDebit = 0;
         let totalCredit = 0;
+        
         let html = `
             <div style="font-weight:700;margin-bottom:10px;font-size:18px;background:#f8fafc;padding:12px;border-radius:8px;">
                 📄 كشف حساب: <strong>${acc ? acc.name : ''}</strong> 
                 <span style="color:#64748b;font-size:16px;margin-right:15px;">
                     (الرصيد الحالي: ${acc ? acc.balance.toFixed(2) : 0} ${acc ? acc.currency_symbol || '' : ''})
                 </span>
-                <div style="margin-top:5px;">
-                    <button class="btn btn-print btn-sm" onclick="printStatement(${account_id})">🖨️ طباعة</button>
-                    <button class="btn btn-share btn-sm" onclick="shareStatement(${account_id})">📤 مشاركة</button>
-                </div>
             </div>
             <div class="table-wrap">
             <table>
-                <thead><tr><th>التاريخ</th><th>الوصف</th><th>مدين</th><th>دائن</th><th>الرصيد التراكمي</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>الوصف</th>
+                        <th>مدين</th>
+                        <th>دائن</th>
+                        <th>الرصيد التراكمي</th>
+                    </tr>
+                </thead>
                 <tbody>
         `;
+        
         rows.forEach(j => {
             const debit = j.debit || 0;
             const credit = j.credit || 0;
             runningBalance = runningBalance + debit - credit;
             totalDebit += debit;
             totalCredit += credit;
+            
             let typeLabel = '';
             if (j.entry_type === 'receipt') typeLabel = 'قبض';
             else if (j.entry_type === 'payment') typeLabel = 'دفع';
             else if (j.entry_type === 'expense') typeLabel = 'مصروف';
             else if (j.entry_type === 'revenue') typeLabel = 'إيراد';
+            else if (j.entry_type === 'sale') typeLabel = 'مبيع';
+            else if (j.entry_type === 'purchase') typeLabel = 'شراء';
+            
             html += `<tr>
                 <td>${j.date || ''}</td>
                 <td>${j.description || ''} <span style="color:#94a3b8;font-size:12px;margin-right:8px;">[${typeLabel}]</span></td>
-                <td style="color:${debit > 0 ? '#22c55e' : '#94a3b8'};">
+                <td style="color:${debit > 0 ? '#22c55e' : '#94a3b8'};font-weight:${debit > 0 ? 'bold' : 'normal'};">
                     ${debit > 0 ? debit.toFixed(2) + ' ' + (acc ? acc.currency_symbol || '' : '') : '-'}
                 </td>
-                <td style="color:${credit > 0 ? '#ef4444' : '#94a3b8'};">
+                <td style="color:${credit > 0 ? '#ef4444' : '#94a3b8'};font-weight:${credit > 0 ? 'bold' : 'normal'};">
                     ${credit > 0 ? credit.toFixed(2) + ' ' + (acc ? acc.currency_symbol || '' : '') : '-'}
                 </td>
                 <td style="font-weight:bold;color:${runningBalance >= 0 ? '#22c55e' : '#ef4444'};">
@@ -1941,6 +2078,7 @@
                 </td>
             </tr>`;
         });
+        
         html += `
                 </tbody>
                 <tfoot>
@@ -1957,10 +2095,10 @@
             <div style="margin-top:15px;padding:12px;background:#f8fafc;border-radius:8px;font-size:14px;color:#64748b;">
                 <div>📌 ملخص الحركات:</div>
                 <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:5px;">
-                    <div>المدين (زيادة الرصيد): <span style="color:#22c55e;font-weight:bold;">
+                    <div>إجمالي المدين (زيادة الرصيد): <span style="color:#22c55e;font-weight:bold;">
                         ${totalDebit.toFixed(2)} ${acc ? acc.currency_symbol || '' : ''}
                     </span></div>
-                    <div>الدائن (نقصان الرصيد): <span style="color:#ef4444;font-weight:bold;">
+                    <div>إجمالي الدائن (نقصان الرصيد): <span style="color:#ef4444;font-weight:bold;">
                         ${totalCredit.toFixed(2)} ${acc ? acc.currency_symbol || '' : ''}
                     </span></div>
                     <div>صافي الحركات: <span style="font-weight:bold;color:${runningBalance >= 0 ? '#22c55e' : '#ef4444'};">
@@ -1973,7 +2111,7 @@
     };
 
     // ================================================================
-    // 20. المخزون - دوال
+    // 13. المخزون - دوال (مختصرة)
     // ================================================================
     window.switchInventoryTab = function(tabId) {
         document.querySelectorAll('#inventoryTabs .tab-btn').forEach(t => t.classList.remove('active'));
@@ -2048,9 +2186,6 @@
 
     document.getElementById('mat-barcode')?.addEventListener('input', previewBarcode);
 
-    // ================================================================
-    // دالة حفظ مادة جديدة
-    // ================================================================
     window.saveMaterial = function() {
         const name = document.getElementById('mat-name').value.trim();
         const category_id = document.getElementById('mat-category').value;
@@ -2082,9 +2217,6 @@
         }
     };
 
-    // ================================================================
-    // دالة عرض المواد
-    // ================================================================
     function loadMaterials() {
         const search = document.getElementById('search-material')?.value.toLowerCase() || '';
         let sql = `SELECT m.*, c.name as category_name, u.name as unit_name, u.abbreviation as unit_abbr,
@@ -2124,15 +2256,9 @@
         `).join('');
     }
 
-    // ================================================================
-    // دالة فتح تعديل المادة
-    // ================================================================
     window.openEditMaterial = function(id) {
         const mat = query("SELECT * FROM materials WHERE id = ?", [id])[0];
-        if (!mat) {
-            alert('المادة غير موجودة');
-            return;
-        }
+        if (!mat) return alert('المادة غير موجودة');
         document.getElementById('edit-mat-id').value = mat.id;
         document.getElementById('edit-mat-name').value = mat.name;
         document.getElementById('edit-mat-cost').value = mat.cost_price;
@@ -2141,27 +2267,20 @@
         document.getElementById('edit-mat-min-qty').value = mat.min_quantity || 5;
         document.getElementById('edit-mat-barcode').value = mat.barcode || '';
         document.getElementById('edit-mat-notes').value = mat.notes || '';
-        
         const cats = query("SELECT * FROM categories ORDER BY name");
         const catSel = document.getElementById('edit-mat-category');
         catSel.innerHTML = cats.map(c => `<option value="${c.id}" ${c.id == mat.category_id ? 'selected' : ''}>${c.name}</option>`).join('');
-        
         const units = query("SELECT * FROM units ORDER BY name");
         const unitSel = document.getElementById('edit-mat-unit');
         unitSel.innerHTML = units.map(u => `<option value="${u.id}" ${u.id == mat.unit_id ? 'selected' : ''}>${u.name} (${u.abbreviation})</option>`).join('');
-        
         const currencies = query("SELECT * FROM currencies ORDER BY name");
         const costSel = document.getElementById('edit-mat-cost-currency');
         costSel.innerHTML = currencies.map(c => `<option value="${c.id}" ${c.id == mat.cost_currency_id ? 'selected' : ''}>${c.name} (${c.symbol})</option>`).join('');
         const sellSel = document.getElementById('edit-mat-sell-currency');
         sellSel.innerHTML = currencies.map(c => `<option value="${c.id}" ${c.id == mat.sell_currency_id ? 'selected' : ''}>${c.name} (${c.symbol})</option>`).join('');
-        
         switchInventoryTab('edit-material');
     };
 
-    // ================================================================
-    // دالة تحديث المادة
-    // ================================================================
     window.updateMaterial = function() {
         const id = document.getElementById('edit-mat-id').value;
         const name = document.getElementById('edit-mat-name').value.trim();
@@ -2187,9 +2306,6 @@
         }
     };
 
-    // ================================================================
-    // دالة حذف المادة
-    // ================================================================
     window.deleteMaterial = function(id) {
         if (!confirm('حذف المادة؟')) return;
         if (run("DELETE FROM materials WHERE id = ?", [id])) {
@@ -2198,9 +2314,6 @@
         }
     };
 
-    // ================================================================
-    // 21. جرد المواد
-    // ================================================================
     function loadInventoryCountForm() {
         const customers = query("SELECT id, name FROM accounts WHERE type = 'customer' ORDER BY name");
         const sel = document.getElementById('count-customer');
@@ -2319,7 +2432,7 @@
     };
 
     // ================================================================
-    // 22. مصمم الباركود
+    // 14. مصمم الباركود
     // ================================================================
     window.designBarcode = function() {
         const text = document.getElementById('design-barcode-text').value.trim();
@@ -2401,7 +2514,7 @@
     };
 
     // ================================================================
-    // 23. الفواتير - دوال
+    // 15. الفواتير - دوال
     // ================================================================
     let tempInvoiceItems = [];
 
@@ -2548,7 +2661,7 @@
     };
 
     // ================================================================
-    // 24. حفظ الفاتورة (مع تحديث رصيد الحساب)
+    // حفظ الفاتورة مع تأثيرها على الصندوق
     // ================================================================
     window.saveInvoice = function() {
         if (tempInvoiceItems.length === 0) return alert('أضف أصنافاً للفاتورة');
@@ -2577,6 +2690,8 @@
         const acc = query("SELECT * FROM accounts WHERE id = ?", [account_id])[0];
         if (!acc) return alert('الحساب غير موجود');
         
+        const cashAcc = query("SELECT * FROM accounts WHERE type = 'cash' LIMIT 1")[0];
+        
         db.run("BEGIN TRANSACTION");
         try {
             db.run(`INSERT INTO invoices (type, account_id, currency_id, date, due_date, payment, note, total)
@@ -2601,32 +2716,58 @@
             let balanceChange = 0;
             let debit = 0, credit = 0;
             let entryType = '';
+            let cashDebit = 0, cashCredit = 0;
             
             if (type === 'sale') {
-                balanceChange = total;
+                balanceChange = total; // الزبون صار مدين لك أكثر
                 debit = total;
-                entryType = 'receipt';
+                entryType = 'sale';
+                // إذا كانت الفاتورة نقدية، يزيد الصندوق
+                if (payment === 'cash' && cashAcc) {
+                    cashDebit = total;
+                }
             } else if (type === 'purchase') {
-                balanceChange = -total;
+                balanceChange = -total; // أنت صرفت للمورد
                 credit = total;
-                entryType = 'payment';
+                entryType = 'purchase';
+                // إذا كانت الفاتورة نقدية، ينقص الصندوق
+                if (payment === 'cash' && cashAcc) {
+                    cashCredit = total;
+                }
             } else if (type === 'sale_return') {
                 balanceChange = -total;
                 credit = total;
-                entryType = 'payment';
+                entryType = 'sale_return';
+                if (payment === 'cash' && cashAcc) {
+                    cashCredit = total;
+                }
             } else if (type === 'purchase_return') {
                 balanceChange = total;
                 debit = total;
-                entryType = 'receipt';
+                entryType = 'purchase_return';
+                if (payment === 'cash' && cashAcc) {
+                    cashDebit = total;
+                }
             }
+            // التلف لا يؤثر على رصيد الحساب
             
             if (balanceChange !== 0) {
                 const newBalance = acc.balance + balanceChange;
                 db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, account_id]);
-                const description = `فاتورة ${type === 'sale' ? 'مبيع' : type === 'purchase' ? 'شراء' : type === 'sale_return' ? 'مردود مبيع' : 'مردود شراء'} #${invoiceId} ${payment === 'credit' ? '(آجل)' : '(نقدي)'}`;
+                
+                const description = `فاتورة ${type === 'sale' ? 'مبيع' : type === 'purchase' ? 'شراء' : type === 'sale_return' ? 'مردود مبيع' : 'مردود شراء'} #${invoiceId}`;
                 db.run(`INSERT INTO journal_entries (account_id, date, description, debit, credit, entry_type, reference)
                         VALUES (?, ?, ?, ?, ?, ?, ?)`,
                         [account_id, date, description, debit, credit, entryType, `INV-${invoiceId}`]);
+            }
+            
+            // تحديث الصندوق للفواتير النقدية
+            if (payment === 'cash' && cashAcc && (cashDebit !== 0 || cashCredit !== 0)) {
+                const newCashBalance = cashAcc.balance + cashDebit - cashCredit;
+                db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newCashBalance, cashAcc.id]);
+                db.run(`INSERT INTO journal_entries (account_id, date, description, debit, credit, entry_type, reference)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [cashAcc.id, date, 'تسوية صندوق: فاتورة نقدية #' + invoiceId, cashDebit, cashCredit, 'cash', `INV-${invoiceId}`]);
             }
             
             db.run("COMMIT");
@@ -2644,9 +2785,6 @@
         }
     };
 
-    // ================================================================
-    // 25. قائمة الفواتير
-    // ================================================================
     function loadInvoices() {
         const search = document.getElementById('search-invoice')?.value.toLowerCase() || '';
         const filterType = document.getElementById('filter-invoice-type')?.value || 'all';
@@ -2690,8 +2828,6 @@
                     <div>
                         <button class="btn btn-primary btn-sm" onclick="openEditInvoice(${inv.id})">✏️</button>
                         <button class="btn btn-danger btn-sm" onclick="deleteInvoice(${inv.id})">✖</button>
-                        <button class="btn btn-print btn-sm" onclick="printInvoice(${inv.id})">🖨️</button>
-                        <button class="btn btn-share btn-sm" onclick="shareInvoice(${inv.id})">📤</button>
                     </div>
                 </div>
                 <div style="font-size:14px;color:#64748b;margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9;">
@@ -2702,17 +2838,14 @@
     }
 
     // ================================================================
-    // 26. تعديل وحذف الفواتير
+    // 16. تعديل وحذف الفواتير
     // ================================================================
     let editInvoiceItems = [];
     let editInvoiceData = null;
 
     window.openEditInvoice = function(id) {
         const inv = query("SELECT * FROM invoices WHERE id = ?", [id])[0];
-        if (!inv) {
-            alert('الفاتورة غير موجودة');
-            return;
-        }
+        if (!inv) return alert('الفاتورة غير موجودة');
         editInvoiceData = inv;
         editInvoiceItems = query("SELECT * FROM invoice_items WHERE invoice_id = ?", [id]);
         document.getElementById('edit-inv-id').value = inv.id;
@@ -2765,9 +2898,6 @@
         renderEditInvoiceItems();
     };
 
-    // ================================================================
-    // تحديث الفاتورة
-    // ================================================================
     window.updateInvoice = function() {
         const id = document.getElementById('edit-inv-id').value;
         const type = document.getElementById('edit-inv-type').value;
@@ -2791,11 +2921,17 @@
         
         const newAcc = query("SELECT * FROM accounts WHERE id = ?", [account_id])[0];
         const oldAcc = query("SELECT * FROM accounts WHERE id = ?", [oldInv.account_id])[0];
+        const cashAcc = query("SELECT * FROM accounts WHERE type = 'cash' LIMIT 1")[0];
         
         db.run("BEGIN TRANSACTION");
         try {
+            // حذف الإدخالات القديمة
             db.run("DELETE FROM journal_entries WHERE reference = ?", [`INV-${id}`]);
+            if (cashAcc) {
+                db.run("DELETE FROM journal_entries WHERE reference = ? AND account_id = ?", [`INV-${id}`, cashAcc.id]);
+            }
             
+            // استرجاع المخزون القديم
             for (let item of oldItems) {
                 const mat = query("SELECT quantity FROM materials WHERE id = ?", [item.material_id])[0];
                 if (mat) {
@@ -2809,6 +2945,7 @@
                 }
             }
             
+            // استرجاع رصيد الحساب القديم
             if (oldAcc) {
                 let oldBalanceChange = 0;
                 if (oldInv.type === 'sale') oldBalanceChange = oldInv.total;
@@ -2819,11 +2956,24 @@
                 db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, oldInv.account_id]);
             }
             
+            // استرجاع الصندوق القديم (للفواتير النقدية)
+            if (cashAcc && oldInv.payment === 'cash') {
+                let oldCashChange = 0;
+                if (oldInv.type === 'sale') oldCashChange = oldInv.total;
+                else if (oldInv.type === 'purchase') oldCashChange = -oldInv.total;
+                else if (oldInv.type === 'sale_return') oldCashChange = -oldInv.total;
+                else if (oldInv.type === 'purchase_return') oldCashChange = oldInv.total;
+                const newCashBalance = cashAcc.balance - oldCashChange;
+                db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newCashBalance, cashAcc.id]);
+            }
+            
             db.run("DELETE FROM invoice_items WHERE invoice_id = ?", [id]);
             
+            // تحديث الفاتورة
             db.run(`UPDATE invoices SET type = ?, account_id = ?, currency_id = ?, date = ?, due_date = ?, payment = ?, note = ?, total = ? WHERE id = ?`,
                     [type, account_id, currency_id, date, due_date, payment, note, total, id]);
             
+            // إدراج الأصناف الجديدة وتحديث المخزون
             for (let item of editInvoiceItems) {
                 db.run(`INSERT INTO invoice_items (invoice_id, material_id, quantity, price, total)
                         VALUES (?, ?, ?, ?, ?)`,
@@ -2840,6 +2990,7 @@
                 }
             }
             
+            // تحديث رصيد الحساب الجديد
             if (newAcc) {
                 let newBalanceChange = 0;
                 let debit = 0, credit = 0;
@@ -2848,28 +2999,46 @@
                 if (type === 'sale') {
                     newBalanceChange = total;
                     debit = total;
-                    entryType = 'receipt';
+                    entryType = 'sale';
                 } else if (type === 'purchase') {
                     newBalanceChange = -total;
                     credit = total;
-                    entryType = 'payment';
+                    entryType = 'purchase';
                 } else if (type === 'sale_return') {
                     newBalanceChange = -total;
                     credit = total;
-                    entryType = 'payment';
+                    entryType = 'sale_return';
                 } else if (type === 'purchase_return') {
                     newBalanceChange = total;
                     debit = total;
-                    entryType = 'receipt';
+                    entryType = 'purchase_return';
                 }
                 
                 if (newBalanceChange !== 0) {
                     const newBalance = newAcc.balance + newBalanceChange;
                     db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, account_id]);
-                    const description = `فاتورة ${type === 'sale' ? 'مبيع' : type === 'purchase' ? 'شراء' : type === 'sale_return' ? 'مردود مبيع' : 'مردود شراء'} #${id} ${payment === 'credit' ? '(آجل)' : '(نقدي)'}`;
+                    const description = `فاتورة ${type === 'sale' ? 'مبيع' : type === 'purchase' ? 'شراء' : type === 'sale_return' ? 'مردود مبيع' : 'مردود شراء'} #${id}`;
                     db.run(`INSERT INTO journal_entries (account_id, date, description, debit, credit, entry_type, reference)
                             VALUES (?, ?, ?, ?, ?, ?, ?)`,
                             [account_id, date, description, debit, credit, entryType, `INV-${id}`]);
+                }
+            }
+            
+            // تحديث الصندوق (للفواتير النقدية)
+            if (cashAcc && payment === 'cash') {
+                let cashChange = 0;
+                let cashDebit = 0, cashCredit = 0;
+                if (type === 'sale') { cashChange = total; cashDebit = total; }
+                else if (type === 'purchase') { cashChange = -total; cashCredit = total; }
+                else if (type === 'sale_return') { cashChange = -total; cashCredit = total; }
+                else if (type === 'purchase_return') { cashChange = total; cashDebit = total; }
+                
+                if (cashChange !== 0) {
+                    const newCashBalance = cashAcc.balance + cashChange;
+                    db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newCashBalance, cashAcc.id]);
+                    db.run(`INSERT INTO journal_entries (account_id, date, description, debit, credit, entry_type, reference)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                            [cashAcc.id, date, 'تسوية صندوق: فاتورة نقدية #' + id, cashDebit, cashCredit, 'cash', `INV-${id}`]);
                 }
             }
             
@@ -2886,18 +3055,17 @@
         }
     };
 
-    // ================================================================
-    // دالة حذف الفاتورة
-    // ================================================================
     window.deleteInvoice = function(id) {
         if (!confirm('حذف الفاتورة؟ سيتم استرجاع المخزون والرصيد.')) return;
         const inv = query("SELECT * FROM invoices WHERE id = ?", [id])[0];
         if (!inv) return alert('الفاتورة غير موجودة');
         const items = query("SELECT * FROM invoice_items WHERE invoice_id = ?", [id]);
         const acc = query("SELECT * FROM accounts WHERE id = ?", [inv.account_id])[0];
+        const cashAcc = query("SELECT * FROM accounts WHERE type = 'cash' LIMIT 1")[0];
         
         db.run("BEGIN TRANSACTION");
         try {
+            // استرجاع المخزون
             for (let item of items) {
                 const mat = query("SELECT quantity FROM materials WHERE id = ?", [item.material_id])[0];
                 if (mat) {
@@ -2911,6 +3079,7 @@
                 }
             }
             
+            // استرجاع رصيد الحساب
             if (acc) {
                 let balanceChange = 0;
                 if (inv.type === 'sale') balanceChange = inv.total;
@@ -2921,7 +3090,21 @@
                 db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newBalance, acc.id]);
             }
             
+            // استرجاع الصندوق (للفواتير النقدية)
+            if (cashAcc && inv.payment === 'cash') {
+                let cashChange = 0;
+                if (inv.type === 'sale') cashChange = inv.total;
+                else if (inv.type === 'purchase') cashChange = -inv.total;
+                else if (inv.type === 'sale_return') cashChange = -inv.total;
+                else if (inv.type === 'purchase_return') cashChange = inv.total;
+                const newCashBalance = cashAcc.balance - cashChange;
+                db.run(`UPDATE accounts SET balance = ? WHERE id = ?`, [newCashBalance, cashAcc.id]);
+            }
+            
             db.run("DELETE FROM journal_entries WHERE reference = ?", [`INV-${id}`]);
+            if (cashAcc) {
+                db.run("DELETE FROM journal_entries WHERE reference = ? AND account_id = ?", [`INV-${id}`, cashAcc.id]);
+            }
             db.run("DELETE FROM invoice_items WHERE invoice_id = ?", [id]);
             db.run("DELETE FROM invoices WHERE id = ?", [id]);
             
@@ -2938,181 +3121,7 @@
     };
 
     // ================================================================
-    // 27. الطباعة والمشاركة
-    // ================================================================
-    window.printInvoice = function(invoiceId) {
-        const inv = query("SELECT * FROM invoices WHERE id = ?", [invoiceId])[0];
-        if (!inv) return alert('الفاتورة غير موجودة');
-        const items = query("SELECT * FROM invoice_items WHERE invoice_id = ?", [invoiceId]);
-        const acc = query("SELECT * FROM accounts WHERE id = ?", [inv.account_id])[0];
-        const cur = query("SELECT * FROM currencies WHERE id = ?", [inv.currency_id])[0];
-        const company = query("SELECT * FROM company LIMIT 1")[0];
-        
-        const printWindow = window.open('', '_blank', 'width=800,height=600');
-        let itemsHtml = items.map((item, i) => {
-            const mat = query("SELECT name FROM materials WHERE id = ?", [item.material_id])[0];
-            return `<tr><td>${i+1}</td><td>${mat?.name || 'محذوف'}</td><td>${item.quantity}</td><td>${item.price.toFixed(2)}</td><td>${item.total.toFixed(2)}</td></tr>`;
-        }).join('');
-        
-        printWindow.document.write(`
-            <html><head><title>فاتورة #${inv.id}</title>
-            <style>body{font-family:system-ui;padding:40px;direction:rtl;max-width:800px;margin:0 auto;}
-            .header{text-align:center;border-bottom:2px solid #0f172a;padding-bottom:15px;margin-bottom:20px;}
-            .header h1{font-size:24px;margin:0;}
-            .info{display:flex;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;}
-            .info .label{color:#64748b;font-weight:600;}
-            table{width:100%;border-collapse:collapse;margin:15px 0;}
-            th,td{padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;}
-            th{background:#f8fafc;font-weight:700;}
-            .total-row td{background:#f1f5f9;font-weight:700;font-size:16px;}
-            .footer{text-align:center;border-top:1px solid #e2e8f0;padding-top:15px;margin-top:20px;font-size:12px;color:#64748b;}
-            .badge{padding:2px 12px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;}
-            .badge.green{background:#dcfce7;color:#15803d;}
-            .badge.yellow{background:#fef9c3;color:#854d0e;}
-            @media print{body{padding:20px;}}</style>
-            </head><body>
-            <div class="header">${company?.logo ? `<img src="${company.logo}" style="max-height:60px;margin-bottom:10px;">` : ''}<h1>${company?.name || 'فاتورة'}</h1><div style="color:#64748b;">${company?.address || ''} ${company?.phone ? '| هاتف: ' + company.phone : ''}</div></div>
-            <div class="info"><div><div><span class="label">رقم الفاتورة:</span> #${inv.id}</div><div><span class="label">التاريخ:</span> ${new Date(inv.date).toLocaleDateString()}</div>${inv.due_date ? `<div><span class="label">تاريخ الاستحقاق:</span> ${new Date(inv.due_date).toLocaleDateString()}</div>` : ''}<div><span class="label">نوع الفاتورة:</span> ${inv.type}</div></div>
-            <div><div><span class="label">الحساب:</span> ${acc?.name || 'غير محدد'}</div><div><span class="label">العملة:</span> ${cur?.name || ''}</div><div><span class="label">طريقة الدفع:</span> <span class="badge ${inv.payment === 'credit' ? 'yellow' : 'green'}">${inv.payment === 'credit' ? 'آجل' : 'نقدي'}</span></div>${inv.note ? `<div><span class="label">ملاحظات:</span> ${inv.note}</div>` : ''}</div></div>
-            <table><thead><tr><th>#</th><th>المادة</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead><tbody>${itemsHtml}</tbody><tfoot><tr class="total-row"><td colspan="4" style="text-align:left;">الإجمالي الكلي</td><td>${inv.total.toFixed(2)} ${cur?.symbol || ''}</td></tr></tfoot></table>
-            <div class="footer">${company?.name || 'نظام المحاسبة'} - شكراً لتعاملكم معنا</div>
-            <script>setTimeout(() => { window.print(); }, 500);<\/script>
-            </body></html>
-        `);
-        printWindow.document.close();
-    };
-
-    // ================================================================
-    // 28. مشاركة الفاتورة
-    // ================================================================
-    window.shareInvoice = function(invoiceId) {
-        const inv = query("SELECT * FROM invoices WHERE id = ?", [invoiceId])[0];
-        if (!inv) return alert('الفاتورة غير موجودة');
-        const items = query("SELECT * FROM invoice_items WHERE invoice_id = ?", [invoiceId]);
-        const acc = query("SELECT * FROM accounts WHERE id = ?", [inv.account_id])[0];
-        const cur = query("SELECT * FROM currencies WHERE id = ?", [inv.currency_id])[0];
-        const company = query("SELECT * FROM company LIMIT 1")[0];
-        
-        let itemsHtml = items.map((item, i) => {
-            const mat = query("SELECT name FROM materials WHERE id = ?", [item.material_id])[0];
-            return `<tr><td>${i+1}</td><td>${mat?.name || 'محذوف'}</td><td>${item.quantity}</td><td>${item.price.toFixed(2)}</td><td>${item.total.toFixed(2)}</td></tr>`;
-        }).join('');
-        
-        const element = document.createElement('div');
-        element.innerHTML = `
-            <div style="padding:20px;font-family:system-ui;direction:rtl;max-width:800px;margin:0 auto;">
-                <div style="text-align:center;border-bottom:2px solid #0f172a;padding-bottom:15px;margin-bottom:20px;">
-                    ${company?.logo ? `<img src="${company.logo}" style="max-height:60px;margin-bottom:10px;">` : ''}
-                    <h2>${company?.name || 'فاتورة'}</h2>
-                    <div style="color:#64748b;">${company?.address || ''} ${company?.phone ? '| هاتف: ' + company.phone : ''}</div>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;">
-                    <div><strong>رقم الفاتورة:</strong> #${inv.id}</div>
-                    <div><strong>التاريخ:</strong> ${new Date(inv.date).toLocaleDateString()}</div>
-                    ${inv.due_date ? `<div><strong>تاريخ الاستحقاق:</strong> ${new Date(inv.due_date).toLocaleDateString()}</div>` : ''}
-                    <div><strong>نوع الفاتورة:</strong> ${inv.type}</div>
-                    <div><strong>الحساب:</strong> ${acc?.name || 'غير محدد'}</div>
-                    <div><strong>العملة:</strong> ${cur?.name || ''}</div>
-                    <div><strong>طريقة الدفع:</strong> ${inv.payment === 'credit' ? 'آجل' : 'نقدي'}</div>
-                    ${inv.note ? `<div><strong>ملاحظات:</strong> ${inv.note}</div>` : ''}
-                </div>
-                <table style="width:100%;border-collapse:collapse;margin:15px 0;">
-                    <thead><tr style="background:#f8fafc;"><th style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">#</th><th style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">المادة</th><th style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">الكمية</th><th style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">سعر الوحدة</th><th style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">الإجمالي</th></tr></thead>
-                    <tbody>${itemsHtml}</tbody>
-                    <tfoot><tr style="background:#f1f5f9;font-weight:700;"><td colspan="4" style="padding:10px;text-align:left;">الإجمالي الكلي</td><td style="padding:10px;">${inv.total.toFixed(2)} ${cur?.symbol || ''}</td></tr></tfoot>
-                </table>
-                <div style="text-align:center;border-top:1px solid #e2e8f0;padding-top:15px;margin-top:20px;font-size:12px;color:#64748b;">
-                    ${company?.name || 'نظام المحاسبة'} - شكراً لتعاملكم معنا
-                </div>
-            </div>
-        `;
-        
-        const opt = {
-            margin: [10, 10, 10, 10],
-            filename: `فاتورة_${inv.id}_${new Date().toISOString().slice(0,10)}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        
-        html2pdf().set(opt).from(element).save()
-            .then(() => {
-                if (navigator.share) {
-                    navigator.share({
-                        title: `فاتورة #${inv.id}`,
-                        text: `فاتورة رقم ${inv.id} - ${acc?.name || ''}`,
-                        url: window.location.href
-                    }).catch(() => {});
-                }
-            })
-            .catch(err => {
-                alert('حدث خطأ أثناء إنشاء PDF: ' + err.message);
-            });
-    };
-
-    // ================================================================
-    // 29. التقارير
-    // ================================================================
-    function loadAllReports() {
-        loadProfitLoss();
-        loadDailyMovement();
-        loadBudget();
-        loadTopMaterials();
-        loadTopCustomers();
-        loadLowStock();
-    }
-
-    window.switchReportTab = function(tabId) {
-        document.querySelectorAll('#reportsTabs .tab-btn').forEach(t => t.classList.remove('active'));
-        document.querySelector(`#reportsTabs .tab-btn[onclick*="${tabId}"]`)?.classList.add('active');
-        document.querySelectorAll('#page-reports .tab-panel').forEach(p => p.classList.remove('active'));
-        const panel = document.getElementById('panel-' + tabId);
-        if (panel) panel.classList.add('active');
-        switch(tabId) {
-            case 'profit-loss': loadProfitLoss(); break;
-            case 'daily-movement': loadDailyMovement(); break;
-            case 'budget': loadBudget(); break;
-            case 'top-materials': loadTopMaterials(); break;
-            case 'top-customers': loadTopCustomers(); break;
-            case 'low-stock': loadLowStock(); break;
-        }
-    };
-
-    window.loadProfitLoss = function() {
-        const from = document.getElementById('pl-from')?.value || '2000-01-01';
-        const to = document.getElementById('pl-to')?.value || new Date().toISOString().slice(0,10);
-        const sales = query("SELECT total FROM invoices WHERE type = 'sale' AND date BETWEEN ? AND ?", [from, to]);
-        const purchases = query("SELECT total FROM invoices WHERE type = 'purchase' AND date BETWEEN ? AND ?", [from, to]);
-        const saleReturns = query("SELECT total FROM invoices WHERE type = 'sale_return' AND date BETWEEN ? AND ?", [from, to]);
-        const purchaseReturns = query("SELECT total FROM invoices WHERE type = 'purchase_return' AND date BETWEEN ? AND ?", [from, to]);
-        const damages = query("SELECT * FROM inventory_counts WHERE date BETWEEN ? AND ?", [from, to]);
-        const totalSales = sales.reduce((s, r) => s + r.total, 0);
-        const totalPurchases = purchases.reduce((s, r) => s + r.total, 0);
-        const totalSaleReturns = saleReturns.reduce((s, r) => s + r.total, 0);
-        const totalPurchaseReturns = purchaseReturns.reduce((s, r) => s + r.total, 0);
-        const totalDamage = damages.reduce((s, r) => s + (r.difference < 0 ? -r.difference : 0), 0);
-        const grossProfit = totalSales - totalPurchases;
-        const netProfit = grossProfit - totalSaleReturns + totalPurchaseReturns - totalDamage;
-        const container = document.getElementById('profit-loss-result');
-        if (!container) return;
-        container.innerHTML = `
-            <div class="report-section">
-                <h4>📊 ملخص الأرباح والخسائر (${from} إلى ${to})</h4>
-                <div class="report-summary">
-                    <div class="item"><div class="label">إجمالي المبيعات</div><div class="value" style="color:#22c55e;">${totalSales.toFixed(2)}</div></div>
-                    <div class="item"><div class="label">إجمالي المشتريات</div><div class="value" style="color:#ef4444;">${totalPurchases.toFixed(2)}</div></div>
-                    <div class="item"><div class="label">مردودات المبيعات</div><div class="value" style="color:#ef4444;">${totalSaleReturns.toFixed(2)}</div></div>
-                    <div class="item"><div class="label">مردودات المشتريات</div><div class="value" style="color:#22c55e;">${totalPurchaseReturns.toFixed(2)}</div></div>
-                    <div class="item"><div class="label">قيمة التلف</div><div class="value" style="color:#ef4444;">${totalDamage.toFixed(2)}</div></div>
-                    <div class="item"><div class="label">إجمالي الربح الإجمالي</div><div class="value" style="color:${grossProfit >= 0 ? '#22c55e' : '#ef4444'};">${grossProfit.toFixed(2)}</div></div>
-                    <div class="item"><div class="label">صافي الربح/الخسارة</div><div class="value" style="color:${netProfit >= 0 ? '#22c55e' : '#ef4444'};font-size:26px;">${netProfit.toFixed(2)}</div></div>
-                </div>
-            </div>
-        `;
-    };
-
-    // ================================================================
-    // 30. المزامنة
+    // 17. المزامنة
     // ================================================================
     window.exportDB = function() {
         const data = db.export();
@@ -3149,7 +3158,7 @@
     };
 
     // ================================================================
-    // 31. Boot
+    // 18. Boot
     // ================================================================
     window.onload = function() {
         try {
